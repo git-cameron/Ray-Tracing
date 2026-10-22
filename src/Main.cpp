@@ -4,7 +4,7 @@
 #include<iostream>
 
 // created at build
-#include "headers/ShaderStrings.h"
+#include "ShaderStrings.h"
 
 // opengl headers
 #include<glad/glad.h>

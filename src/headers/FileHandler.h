@@ -1,7 +1,7 @@
 #ifndef FILEHANDLER_H
 #define FILEHANDLER_H
 
-#include<nfd/nfd.h>
+#include<nfd.h>
 #include<tinyobjloader/tiny_obj_loader.h>
 #include<string>
 #include<vector>

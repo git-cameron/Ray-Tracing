@@ -4,7 +4,7 @@
 #include <glad/glad.h>
 #include <vector>
 #include "Object.h"
-#include "bvh.h"
+#include "BVH.h"
 
 class SSBO {
 

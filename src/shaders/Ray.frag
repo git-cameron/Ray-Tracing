@@ -131,7 +131,7 @@ float randomNormalDist(inout uint seed) {
     return value * cos(angle);
 }
 
-// Möller–Trumbore
+// Mï¿½llerï¿½Trumbore
 hitData triangleIntersect(Ray ray, Triangle tri) {
 	hitData hit;
 	hit.didHit = false;
@@ -389,7 +389,7 @@ vec3 trace(Ray ray, inout uint seed) {
 				float index = hit.inside ? 1.0f / mat.refraction : mat.refraction;
 				float cosine = dot(-ray.dir, hit.normal);
 				vec3 refractDir = snells(ray.dir, hit.normal, index, cosine);
-				if (refractDir == 0 || fresnel(index, cosine) > random(seed)) ray.dir = reflectRay(ray.dir, hit.normal);
+				if (refractDir == vec3(0) || fresnel(index, cosine) > random(seed)) ray.dir = reflectRay(ray.dir, hit.normal);
 				else ray.dir = refractDir;
 				// blur
 				ray.dir += (1 - mat.smoothness) * randBounce(hit.normal, seed);
@@ -443,6 +443,6 @@ void main() {
 	totalLight = (1.0f - weight) * texture(text, texCoords).xyz + totalLight * weight;
 	
 	// final output color
-	//FragColor = vec4(totalLight, 1.0f);
-	FragColor = vec4(debugValues.x / 300.0f, debugValues.y / 100.0f, 0.0f, 1.0f);
+	FragColor = vec4(totalLight, 1.0f);
+	//FragColor = vec4(debugValues.x / 300.0f, debugValues.y / 100.0f, 0.0f, 1.0f);
 };
