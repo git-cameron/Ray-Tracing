@@ -5,9 +5,9 @@
 
 class FBO {
 public:
-	GLuint ID;
-	GLuint texture;
-	GLuint RBO;
+	GLuint ID{};
+	GLuint texture{};
+	GLuint RBO{};
 
 	FBO(int width, int height);
 

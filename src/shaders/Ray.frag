@@ -131,7 +131,7 @@ float randomNormalDist(inout uint seed) {
     return value * cos(angle);
 }
 
-// M�ller�Trumbore
+// Möller–Trumbore
 hitData triangleIntersect(Ray ray, Triangle tri) {
 	hitData hit;
 	hit.didHit = false;

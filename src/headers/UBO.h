@@ -25,7 +25,7 @@ public:
 	};
 
 	UBO();
-	void build(GLuint program, UBO::Uniforms uniforms, std::vector<Sphere> spheres, std::vector<Material> materials, std::vector<Model> models);
+	void build(GLuint program, const UBO::Uniforms& uniforms, const std::vector<Sphere>& spheres, const std::vector<Material>& materials, const std::vector<Model>& models) const;
 	void bind();
 	void unBind();
 	void deleteUBO();

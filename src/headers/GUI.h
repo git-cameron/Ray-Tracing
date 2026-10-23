@@ -51,25 +51,25 @@ private:
 	bool renderCamFlag = false;
 
 	// backup viewport settings
-	int viewRays;
-	int viewBounces;
-	int viewWidth;
-	int viewHeight;
-	glm::vec3 viewCamPos;
-	glm::vec3 viewCamRot;
-	float viewCamFov;
+	int viewRays{};
+	int viewBounces{};
+	int viewWidth{};
+	int viewHeight{};
+	glm::vec3 viewCamPos{};
+	glm::vec3 viewCamRot{};
+	float viewCamFov{};
 
 	float scale = 1;
-	Material tempMaterial;
-	Sphere tempSphere;
-	Model tempModel;
-	ModelExtra tempModelExtra;
+	Material tempMaterial{};
+	Sphere tempSphere{};
+	Model tempModel{};
+	ModelExtra tempModelExtra{};
 	std::string savePath;
 	std::string modelPath = "Select Model";
 
 	bool editMaterial(Material* mat);
-	bool editSphere(Sphere* sphere, std::vector<Material> materials);
-	bool editModel(Model* model, ModelExtra* Extra, std::vector<Material> materials);
+	bool editSphere(Sphere* sphere, const std::vector<Material>& materials);
+	bool editModel(Model* model, ModelExtra* Extra, const std::vector<Material>& materials);
 
 	void startRender(int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, int& rayCount, int& maxBounces);
 };

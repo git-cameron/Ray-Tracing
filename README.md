@@ -28,8 +28,6 @@ Inspired by [Sebastian Lague](https://youtu.be/Qz0KTGYJtUk) and
 * Tab - Toggle Movement
 * Escape - Exit Program / Cancel Render
 
-***
-
 ## Getting Started
 
 Either download the latest release or follow below to build yourself.  

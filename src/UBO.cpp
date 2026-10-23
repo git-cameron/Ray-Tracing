@@ -4,7 +4,7 @@ UBO::UBO() {
 	glGenBuffers(1, &ID);
 }
 
-void UBO::build(GLuint program, UBO::Uniforms uniforms, std::vector<Sphere> spheres, std::vector<Material> materials, std::vector<Model> models) {
+void UBO::build(const GLuint program, const UBO::Uniforms& uniforms, const std::vector<Sphere>& spheres, const std::vector<Material>& materials, const std::vector<Model>& models) const {
 	// reserve buffer size
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(Uniforms) + sizeof(Sphere) * MAX_SPHERES + sizeof(Material) * MAX_MATERIALS + sizeof(Model) * MAX_MODELS, NULL, GL_STATIC_DRAW);
 

@@ -64,11 +64,11 @@ struct Model {
 	glm::mat4 transform = glm::mat4(1); // 64
 	glm::mat4 invTransform = glm::mat4(1); // 64
 	int matIndex = 0; // 4
-	int startIndex; // 4
-	int endIndex; // 4
-	int BVHIndex; // 4
+	int startIndex{}; // 4
+	int endIndex{}; // 4
+	int BVHIndex{}; // 4
 
-	void setTransform(ModelExtra data) {
+	void setTransform(const ModelExtra& data) {
 		glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.x), originalUp);
 		glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.y), originalSide);
 		glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data.rotation.z), originalDirection);
@@ -80,7 +80,7 @@ struct Model {
 		invTransform = glm::inverse(transform);
 	}
 
-	void setTransform(ModelExtra* data) {
+	void setTransform(const ModelExtra* data) {
 		glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.x), originalUp);
 		glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.y), originalSide);
 		glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data->rotation.z), originalDirection);

@@ -14,7 +14,7 @@ GUI::GUI(GLFWwindow* window) {
 
 
 void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, float dt, int accumulationFrame, 
-	std::vector<Material>& materials, std::vector<Sphere>& spheres, std::vector<Model>& models, std::vector<ModelExtra>& modelExtras, std::vector<Triangle>& triangles, 
+	std::vector<Material>& materials, std::vector<Sphere>& spheres, std::vector<Model>& models, std::vector<ModelExtra>& modelExtras, std::vector<Triangle>& triangles,
 	std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, int& rayCount, int& maxBounces, float& environmentLight) {
 
 	ImGui_ImplOpenGL3_NewFrame();
@@ -55,7 +55,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 		PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		SetNextWindowSize(io.DisplaySize);
 		SetNextWindowPos(ImVec2(0, 0));
-		if (Begin("Render", NULL, ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)) {
+		if (Begin("Render", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)) {
 			viewSize = GetContentRegionAvail();
 			Image((void*)(intptr_t)texture, ImVec2(viewSize[0], viewSize[1] - GetFrameHeightWithSpacing()), ImVec2(0, 1), ImVec2(1, 0));
 			ProgressBar((float) accumulationFrame / renderFrames, ImVec2(-1.0f, 0.0f), (std::to_string(accumulationFrame) + "/" + std::to_string(renderFrames)).c_str());
@@ -72,11 +72,11 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 	if (BeginMenu("File")) {
 		if (MenuItem("Save")) {
 			std::string scenePath = getSavePath("scene.ray", 1);
-			if (scenePath != "") saveScene(scenePath, materials, spheres);
+			if (!scenePath.empty()) saveScene(scenePath, materials, spheres);
 		}
 		if (MenuItem("Open")) {
 			std::string scenePath = getLoadPath(1);
-			if (scenePath != "") {
+			if (!scenePath.empty()) {
 				if (loadScene(scenePath, materials, spheres)) {
 					changed = true;
 				}
@@ -123,20 +123,20 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 	PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	SetNextWindowSize(windowSize);
 	SetNextWindowPos(ImVec2(0, GetFrameHeight()));
-	Begin("Dock", NULL, ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	Begin("Dock", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGuiID dockID = GetID("Dock");
 	DockSpace(dockID, ImVec2(0.0f, 0.0f));
 
 	End();
 
 	// viewport
-	if (Begin("View", NULL, windowFlags)) {
+	if (Begin("View", nullptr, windowFlags)) {
 		viewSize = GetContentRegionAvail();
 		if (matchResolutionFlag) {
 			width = viewSize.x * scale;
 			height = viewSize.y * scale;
 		}
-		Image((void*)(intptr_t)texture, ImVec2(viewSize[0], viewSize[1]), ImVec2(0, 1), ImVec2(1, 0));
+		Image(texture, ImVec2(viewSize[0], viewSize[1]), ImVec2(0, 1), ImVec2(1, 0));
 
 
 		// mouse position in viewport
@@ -390,7 +390,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 
 				// pop up
 				SetNextWindowPos(GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-				if (BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+				if (BeginPopupModal("Delete?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 				{
 					Text("Delete All Spheres?");
 					Separator();
@@ -474,7 +474,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 
 				// pop up
 				SetNextWindowPos(GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-				if (BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+				if (BeginPopupModal("Delete?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 					Text("Delete All Models?");
 					Separator();
 					if (Button("Confirm")) {
@@ -540,7 +540,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 			// gets model path
 			if (Button((modelPath + "##NewModel").c_str())) {
 				modelPath = getLoadPath(0);
-				if (modelPath == "") modelPath = "Select Model";
+				if (modelPath.empty()) modelPath = "Select Model";
 			}
 			SetItemTooltip("Model Path (.obj)");
 
@@ -561,7 +561,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 	// debug display
 	if (debugFlag) {
 		SetNextWindowBgAlpha(0.35f);
-		Begin("Debug", NULL, windowFlags | ImGuiWindowFlags_NoTitleBar);
+		Begin("Debug", nullptr, windowFlags | ImGuiWindowFlags_NoTitleBar);
 		Text(" %.0f fps", 1.0f / dt);
 		Text(" %.2f ms", dt * 1000);
 		Text(" %i frames", accumulationFrame);
@@ -637,7 +637,7 @@ bool GUI::editMaterial(Material* mat) {
 }
 
 
-bool GUI::editSphere(Sphere* sphere, std::vector<Material> materials) {
+bool GUI::editSphere(Sphere* sphere, const std::vector<Material>& materials) {
 	bool changed = false;
 
 	SeparatorText("Sphere Position");
@@ -665,7 +665,7 @@ bool GUI::editSphere(Sphere* sphere, std::vector<Material> materials) {
 }
 
 
-bool GUI::editModel(Model* model, ModelExtra* extra, std::vector<Material> materials) {
+bool GUI::editModel(Model* model, ModelExtra* extra, const std::vector<Material>& materials) {
 	bool changed = false;
 
 	SeparatorText("Model Position##EditModel");
@@ -716,7 +716,7 @@ bool GUI::editModel(Model* model, ModelExtra* extra, std::vector<Material> mater
 
 void GUI::startRender(int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, int& rayCount, int& maxBounces) {
 	savePath = getSavePath("render.png", 0);
-	if (savePath == "") return;
+	if (savePath.empty()) return;
 
 	// backup viewport settings
 	viewWidth = width;

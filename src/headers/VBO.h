@@ -5,7 +5,7 @@
 
 class VBO {
 public:
-	GLuint ID;
+	GLuint ID{};
 	
 	VBO(GLfloat* vertices, GLsizeiptr size);
 

@@ -1,6 +1,6 @@
 #include "headers/BVH.h"
 
-BVH::BVH(Model model, std::vector<Triangle> triangles) {
+BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 	this->modelTriangles = triangles;
 	BVHNode root;
 	root.leftIndex = 0;

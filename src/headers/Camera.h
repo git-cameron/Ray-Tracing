@@ -11,9 +11,9 @@ public:
 	float focus;
 	float sensitivity;
 	float moveSpeed;
-	glm::mat4 model;
-	glm::vec3 pos;
-	glm::vec3 rotation;
+	glm::mat4 model{};
+	glm::vec3 pos{};
+	glm::vec3 rotation{};
 
 	Camera(int width, int height, float fov);
 	void updateRes(int width, int height);
@@ -31,9 +31,9 @@ private:
 	float dt;
 	int width;
 	int height;
-	glm::vec3 side;
-	glm::vec3 up;
-	glm::vec3 direction;
+	glm::vec3 side{};
+	glm::vec3 up{};
+	glm::vec3 direction{};
 };
 
 #endif

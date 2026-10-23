@@ -8,7 +8,7 @@
 #include<fstream>
 #include"headers/Object.h"
 
-static void saveImage(std::string filePath, int width, int height) {
+static void saveImage(const std::string& filePath, int width, int height) {
 	void* data = malloc(width * height * 3);
 	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
 	stbi_flip_vertically_on_write(true);
@@ -22,10 +22,10 @@ static void saveImage(std::string filePath, int width, int height) {
 
 static std::string getSavePath(std::string defaultPath, int mode) {
 	NFD_Init();
-	nfdchar_t* path = 0;
-	nfdsavedialogu8args_t args = {0};
+	nfdchar_t* path = nullptr;
+	nfdsavedialogu8args_t args = {};
 	args.defaultName = defaultPath.c_str();
-	nfdresult_t result;
+	nfdresult_t result = {};
 
 	switch (mode) {
 		// image
@@ -54,10 +54,10 @@ static std::string getSavePath(std::string defaultPath, int mode) {
 
 		switch (mode) {
 		case 0:
-			if (defaultPath.substr(defaultPath.find_last_of(".")) != ".png") defaultPath += ".png";
+			if (defaultPath.substr(defaultPath.find_last_of('.')) != ".png") defaultPath += ".png";
 			break;
 		case 1:
-			if (defaultPath.substr(defaultPath.find_last_of(".")) != ".ray") defaultPath += ".ray";
+			if (defaultPath.substr(defaultPath.find_last_of('.')) != ".ray") defaultPath += ".ray";
 			break;
 		}
 
@@ -73,10 +73,10 @@ static std::string getSavePath(std::string defaultPath, int mode) {
 
 static std::string getLoadPath(int mode) {
 	NFD_Init();
-	nfdchar_t* path = 0;
+	nfdchar_t* path = nullptr;
 	std::string loadPath;
-	nfdopendialogu8args_t args = {0};
-	nfdresult_t result;
+	nfdopendialogu8args_t args = {};
+	nfdresult_t result = {};
 
 	switch (mode) {
 		// model
@@ -112,7 +112,7 @@ static std::string getLoadPath(int mode) {
 }
 
 
-static bool saveScene(std::string filePath, std::vector<Material> materials, std::vector<Sphere> spheres) {
+static bool saveScene(const std::string& filePath, std::vector<Material> materials, std::vector<Sphere> spheres) {
 	std::ofstream file;
 	file.open(filePath);
 
@@ -145,7 +145,7 @@ static bool saveScene(std::string filePath, std::vector<Material> materials, std
 	return true;
 }
 
-static bool loadScene(std::string filePath, std::vector<Material>& materials, std::vector<Sphere>& spheres) {
+static bool loadScene(const std::string& filePath, std::vector<Material>& materials, std::vector<Sphere>& spheres) {
 	std::ifstream file;
 	file.open(filePath);
 	if (!file.is_open()) return false;
@@ -208,7 +208,7 @@ static bool loadScene(std::string filePath, std::vector<Material>& materials, st
 	return true;
 }
 
-static bool loadModel(std::string filePath, std::vector<Model>& models, std::vector<ModelExtra>& modelExtras, std::vector<Triangle>& triangles) {
+static bool loadModel(const std::string& filePath, std::vector<Model>& models, std::vector<ModelExtra>& modelExtras, std::vector<Triangle>& triangles) {
 	tinyobj::ObjReaderConfig config;
 	tinyobj::ObjReader reader;
 
@@ -221,17 +221,17 @@ static bool loadModel(std::string filePath, std::vector<Model>& models, std::vec
 	Model model;
 	model.startIndex = triangles.size();
 
-	for (size_t s = 0; s < shapes.size(); s++) {
+	for (tinyobj::shape_t & shape : shapes) {
 		size_t offset = 0;
 
 		// loop over faces (triangles)
-		for (size_t face = 0; face < shapes[s].mesh.num_face_vertices.size(); face++) {
-			tinyobj::index_t index;
-			Triangle tri;
+		for (size_t face = 0; face < shape.mesh.num_face_vertices.size(); face++) {
+			tinyobj::index_t index{};
+			Triangle tri{};
 
 
 			// vertex A
-			index = shapes[s].mesh.indices[offset];
+			index = shape.mesh.indices[offset];
 
 			tri.posA.x = attrib.vertices[3 * size_t(index.vertex_index)];
 			tri.posA.y = attrib.vertices[3 * size_t(index.vertex_index) + 1];
@@ -246,7 +246,7 @@ static bool loadModel(std::string filePath, std::vector<Model>& models, std::vec
 
 
 			// vertex B
-			index = shapes[s].mesh.indices[offset + 1];
+			index = shape.mesh.indices[offset + 1];
 
 			tri.posB.x = attrib.vertices[3 * size_t(index.vertex_index)];
 			tri.posB.y = attrib.vertices[3 * size_t(index.vertex_index) + 1];
@@ -261,7 +261,7 @@ static bool loadModel(std::string filePath, std::vector<Model>& models, std::vec
 
 
 			// vertex C
-			index = shapes[s].mesh.indices[offset + 2];
+			index = shape.mesh.indices[offset + 2];
 
 			tri.posC.x = attrib.vertices[3 * size_t(index.vertex_index)];
 			tri.posC.y = attrib.vertices[3 * size_t(index.vertex_index) + 1];

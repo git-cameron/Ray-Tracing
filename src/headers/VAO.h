@@ -6,7 +6,7 @@
 
 class VAO {
 public:
-	GLuint ID;
+	GLuint ID{};
 
 	VAO();
 

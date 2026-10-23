@@ -24,7 +24,7 @@ public:
 	std::vector<BVHNode> nodes;
 	std::vector<glm::vec4> BVHTriangles;
 
-	BVH(Model model, std::vector<Triangle> triangles);
+	BVH(const Model& model, const std::vector<Triangle>& triangles);
 
 private:
 	std::vector<Triangle> modelTriangles;
@@ -34,7 +34,7 @@ private:
 
 };
 
-static void addBVH(Model& model, std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, std::vector<Triangle>& triangles) {
+static void addBVH(Model& model, std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, const std::vector<Triangle>& triangles) {
 	model.BVHIndex = nodes.size();
 	int triSize = nodeTriIndex.size();
 	BVH bvh(model, triangles);
@@ -44,8 +44,8 @@ static void addBVH(Model& model, std::vector<BVHNode>& nodes, std::vector<int>& 
 		node.triIndex += triSize;
 		nodes.push_back(node);
 	}
-	for (int i = 0; i < bvh.BVHTriangles.size(); i++) {
-		nodeTriIndex.push_back(bvh.BVHTriangles[i].w);
+	for (glm::vec4 & BVHTriangle : bvh.BVHTriangles) {
+		nodeTriIndex.push_back(BVHTriangle.w);
 	}
 }
 
