@@ -5,6 +5,8 @@ Camera::Camera(int width, int height, float fov) {
 	this->moveSpeed = 1.0f;
 	this->dt = 0;
 	this->fov = fov;
+	this->focusDistance = 1.0f;
+	this->aperture = 0.0f;
 	this->width = width;
 	this->height = height;
 

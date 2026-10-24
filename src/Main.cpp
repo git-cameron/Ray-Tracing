@@ -188,7 +188,7 @@ int main() {
 		rayShader.use();
 
 		// GPU data
-		UBO::Uniforms uni {cam.model, cam.pos, cam.focus, width, height, maxBounces, rayCount, spheres.size(), models.size(), accumulationFrame, environmentLight};
+		UBO::Uniforms uni {cam.model, cam.pos, cam.focus, cam.focusDistance, cam.aperture, width, height, maxBounces, rayCount, spheres.size(), models.size(), accumulationFrame, environmentLight, 0, 0};
 		UBO.bind();
 		UBO.build(rayShader.program, uni, spheres, materials, models);
 

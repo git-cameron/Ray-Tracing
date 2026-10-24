@@ -9,6 +9,8 @@ class Camera {
 public:
 	float fov;
 	float focus;
+	float focusDistance;
+	float aperture;
 	float sensitivity;
 	float moveSpeed;
 	glm::mat4 model{};

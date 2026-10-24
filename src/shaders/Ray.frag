@@ -1,7 +1,8 @@
 #version 460 core
 
 #define pi 3.1415926
-#define epsilon 1e-3
+#define epsilonDist 1e-3
+#define epsilonSmall 1e-10
 #define infinity 1e10
 
 #define maxSpheres 100
@@ -90,6 +91,8 @@ layout(std140) uniform bindPoint {
 	mat4 model; // 64
 	vec3 camPos; // 12
 	float focus; // 4
+	float focusDistance; // 4
+	float aperture; // 4
 	vec2 res; // 8
 	int maxBounces; // 4
 	int rayCount; // 4
@@ -97,6 +100,8 @@ layout(std140) uniform bindPoint {
 	int modelsLength; // 4
 	int accumulationFrame; // 4
 	bool environmentLightFlag; // 4
+	float pad1; // 4
+	float pad2; // 4
 
 	Sphere spheres[maxSpheres];
 	Material materials[maxMaterials];
@@ -128,9 +133,14 @@ float random(inout uint seed) {
 // equal distribution across sphere
 // https://dspguide.com/ch2/6.html
 float randomNormalDist(inout uint seed) {
-    float angle = 2.0 * pi * random(seed);
-    float value = sqrt(-2.0 * log(random(seed)));
-    return value * cos(angle);
+	// Produces NaN when log(0)
+    return sqrt(-2.0 * log(max(random(seed), epsilonSmall))) * cos(2.0 * pi * random(seed));
+}
+
+
+vec2 randomCircle(inout uint seed) {
+	float angle = 2.0 * pi * random(seed);
+	return sqrt(random(seed)) * vec2(cos(angle), sin(angle));
 }
 
 
@@ -148,11 +158,11 @@ bool sphereIntersect(Ray ray, Sphere sphere, out float dist, out bool inside) {
 	inside = false;
 
 	// epsilon sets clip distance and fixes banding
-	if (dist < epsilon) {
+	if (dist < epsilonDist) {
 		dist = b + d;
 		inside = true;
 	}
-	return dist > epsilon;
+	return dist > epsilonDist;
 };
 
 
@@ -164,7 +174,7 @@ bool triangleIntersect(Ray ray, Triangle tri, out float t, out float u, out floa
 	float det = dot(AB, normal);
 
 	// ray parralel to triangle
-	if (abs(det) < 1e-10) return false;
+	if (abs(det) < epsilonSmall) return false;
 
 	// cramers rule
 	float invDet = 1.0 / det;
@@ -178,7 +188,7 @@ bool triangleIntersect(Ray ray, Triangle tri, out float t, out float u, out floa
 
 	// hit distance
 	t = dot(AC, AOxAB) * invDet;
-	return t > epsilon;
+	return t > epsilonDist;
 };
 
 
@@ -431,7 +441,6 @@ vec3 trace(Ray ray, inout uint seed) {
 
 		// tint
 		color *= mat.color;
-
 	}
 	return light;
 };
@@ -441,15 +450,16 @@ void main() {
 	uint seed = uint((gl_FragCoord.y * res.x) + gl_FragCoord.x) + accumulationFrame * 20983476; // large arbitrary  number 
 	float x = -res.x / 2.0 + gl_FragCoord.x;
 	float y = -res.y / 2.0 + gl_FragCoord.y;
-	
-	Ray ray;
-	ray.origin = camPos;
-	ray.dir = normalize(vec3(x, y, focus));
-	ray.dir = (model * vec4(ray.dir, 1.0)).xyz;
-	
 	vec3 totalLight = vec3(0);
 
 	for (int i = 0; i < rayCount; i++) {
+		Ray ray;
+
+		// anti aliasing and depth of field
+		vec3 lens = vec3(randomCircle(seed) * aperture, 0.0);
+		ray.origin = camPos + mat3(model) * lens;
+		ray.dir = normalize(mat3(model) * (vec3(x + random(seed) - 0.5, y + random(seed) - 0.5, focus) * (focusDistance / focus) - lens));
+
 		totalLight += trace(ray, seed);
 	}
 	totalLight /= rayCount;
@@ -461,4 +471,5 @@ void main() {
 	// final output color
 	FragColor = vec4(totalLight, 1.0);
 	//FragColor = vec4(debugValues.x / 300.0, debugValues.y / 100.0, 0.0, 1.0);
+	//if (any(isnan(totalLight))) FragColor = vec4(1, 0, 1, 1);
 };

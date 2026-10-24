@@ -48,6 +48,8 @@ private:
 	glm::vec3 renderCamPos = glm::vec3(0);
 	glm::vec3 renderCamRot = glm::vec3(0);
 	float renderCamFov = 65;
+	float renderCamFocusDistance = 1.0f;
+	float renderCamAperture = 0.0f;
 	bool renderCamFlag = false;
 
 	// backup viewport settings
@@ -58,6 +60,8 @@ private:
 	glm::vec3 viewCamPos{};
 	glm::vec3 viewCamRot{};
 	float viewCamFov{};
+	float viewCamFocusDistance{};
+	float viewCamAperture{};
 
 	float scale = 1;
 	Material tempMaterial{};

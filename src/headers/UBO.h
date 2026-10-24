@@ -14,6 +14,8 @@ public:
 		glm::mat4 model; // 64
 		glm::vec3 camPos; // 12
 		float focus; // 4
+		float focusDistance; // 4
+		float aperture; // 4
 		float width; // 4
 		float height; // 4
 		int maxBounces; // 4
@@ -22,6 +24,8 @@ public:
 		int modelsLength; // 4
 		int accumulationFrame; // 4
 		float environmentLight; // 4
+		float pad1; // 4
+		float pad2; // 4
 	};
 
 	UBO();

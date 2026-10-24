@@ -45,6 +45,8 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 				cam.pos = viewCamPos;
 				cam.rotation = viewCamRot;
 				cam.fov = viewCamFov;
+				cam.focusDistance = viewCamFocusDistance;
+				cam.aperture = viewCamAperture;
 				cam.updateModel();
 				cam.updateFov();
 			}
@@ -240,8 +242,12 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 				SliderFloat("Yaw##Render", &renderCamRot.x, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 				SliderFloat("Roll##Render", &renderCamRot.z, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 
-				Spacing();
+				SeparatorText("Camera Other");
 				SliderFloat("Fov##Render", &renderCamFov, 1, 180, "%.0f", ImGuiSliderFlags_AlwaysClamp);
+				if (DragFloat("Focus##Render", &renderCamFocusDistance, 0.05, 0)) {
+					if (renderCamFocusDistance < 0.1f) renderCamFocusDistance = 0.1f;
+				}
+				SliderFloat("Aperture##Render", &renderCamAperture, 0, 2.0f, "%.3f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
 			}
 
 
@@ -302,10 +308,17 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 				cam.updateFov();
 				changed = true;
 			}
-			if (DragFloat("Speed##Camera", &cam.moveSpeed, 0.05, 0.1, ImGuiSliderFlags_AlwaysClamp)) {
+			if (DragFloat("Focus##Camera", &cam.focusDistance, 0.05, 0)) {
+				if (cam.focusDistance < 0.1f) cam.focusDistance = 0.1f;
+				changed = true;
+			}
+			if (SliderFloat("Aperture##Camera", &cam.aperture, 0, 2.0f, "%.3f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp)) {
+				changed = true;
+			}
+			if (DragFloat("Speed##Camera", &cam.moveSpeed, 0.05, 0.1)) {
 				if (cam.moveSpeed < 0.1f) cam.moveSpeed = 0.1f;
 			}
-			if (DragFloat("Sensitivity##Camera", &cam.sensitivity, 0.05, 0.1, ImGuiSliderFlags_AlwaysClamp)) {
+			if (DragFloat("Sensitivity##Camera", &cam.sensitivity, 0.05, 0.1)) {
 				if (cam.sensitivity < 0.1f) cam.sensitivity = 0.1f;
 			}
 		}
@@ -602,7 +615,7 @@ bool GUI::editMaterial(Material* mat) {
 		changed = true;
 	}
 
-	if (DragFloat("Light Strength", &mat->lightStrength, 0.05, 0, ImGuiSliderFlags_AlwaysClamp)) {
+	if (DragFloat("Light Strength", &mat->lightStrength, 0.05, 0)) {
 		if (mat->lightStrength < 0) mat->lightStrength = 0;
 		changed = true;
 	}
@@ -614,7 +627,7 @@ bool GUI::editMaterial(Material* mat) {
 		changed = true;
 	}
 	if (glass) {
-		if (DragFloat("Refraction", &mat->refraction, 0.001, 0, ImGuiSliderFlags_AlwaysClamp)) {
+		if (DragFloat("Refraction", &mat->refraction, 0.001, 0)) {
 			if (mat->refraction < 0) mat->refraction = 0;
 			changed = true;
 		}
@@ -738,11 +751,15 @@ void GUI::startRender(int& width, int& height, bool& lockedMovement, bool& rende
 		viewCamPos = cam.pos;
 		viewCamRot = cam.rotation;
 		viewCamFov = cam.fov;
+		viewCamFocusDistance = cam.focusDistance;
+		viewCamAperture = cam.aperture;
 
 		// apply render cam settings
 		cam.pos = renderCamPos;
 		cam.rotation = renderCamRot;
 		cam.fov = renderCamFov;
+		cam.focusDistance = renderCamFocusDistance;
+		cam.aperture = renderCamAperture;
 		cam.updateModel();
 		cam.updateFov();
 	}
