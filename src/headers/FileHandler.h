@@ -227,7 +227,7 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 		// loop over faces (triangles)
 		for (size_t face = 0; face < shape.mesh.num_face_vertices.size(); face++) {
 			tinyobj::index_t index{};
-			Triangle tri{};
+			Triangle tri;
 
 
 			// vertex A
