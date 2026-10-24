@@ -133,6 +133,29 @@ float randomNormalDist(inout uint seed) {
     return value * cos(angle);
 }
 
+
+bool sphereIntersect(Ray ray, Sphere sphere, out float dist, out bool inside) {
+	// setting up quadratic
+	vec3 a = sphere.pos - ray.origin;
+	float b = dot(ray.dir, a);
+	float c = b * b - dot(a, a) + sphere.radius * sphere.radius;
+
+	// no real roots
+	if (c < 0.0) return false;
+
+	float d = sqrt(c);
+	dist = b - d;
+	inside = false;
+
+	// epsilon sets clip distance and fixes banding
+	if (dist < epsilon) {
+		dist = b + d;
+		inside = true;
+	}
+	return dist > epsilon;
+};
+
+
 // Möller–Trumbore
 bool triangleIntersect(Ray ray, Triangle tri, out float t, out float u, out float v) {
 	vec3 AB = tri.posB - tri.posA;
@@ -158,43 +181,6 @@ bool triangleIntersect(Ray ray, Triangle tri, out float t, out float u, out floa
 	return t > epsilon;
 };
 
-hitData sphereIntersect(Ray ray, Sphere sphere) {
-	hitData hit;
-	hit.didHit = false;
-
-	// setting up quadratic
-	vec3 a = sphere.pos - ray.origin;
-	float b = dot(ray.dir, a);
-	float c = dot(a, a) - sphere.radius * sphere.radius;
-	float d = b * b - c;
-
-	// any real roots
-	if (d >= 0.0) {
-		float dist = b - sqrt(d);
-		// epsilon sets clip distance and fixes banding
-		if (dist < epsilon) {
-			dist = b + sqrt(d);
-			// missed
-			if (dist < epsilon) return hit;
-		}
-
-		// hit
-		hit.dist = dist;
-		hit.didHit = true;
-		hit.pos = ray.origin + (ray.dir * dist);
-		hit.normal = normalize(hit.pos - sphere.pos);
-
-		// inside or outside sphere
-		if (dot(ray.dir, hit.normal) > 0.0) {
-			hit.normal = -hit.normal;
-			hit.inside = true;
-		} else {
-			hit.inside = false;
-		}
-
-	}
-	return hit;
-};
 
 // slab method
 // https://tavianator.com/2022/ray_box_boundary.html
@@ -207,6 +193,7 @@ float aabbIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax) {
 	float tmax = min(min(tfar.x, tfar.y), tfar.z);
 	return tmin <= tmax ? tmin : infinity;
 };
+
 
 hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 	hitData result;
@@ -291,7 +278,7 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 		result.didHit = true;
 		result.normal = normalize((1.0 - bestU - bestV) * tri.normA + bestU * tri.normB + bestV * tri.normC);
 		result.inside = dot(ray.dir, result.normal) > 0.0;
-		//if (result.inside) result.normal = - result.normal;
+		if (result.inside) result.normal = - result.normal;
 	}
 
 	return result;
@@ -306,12 +293,16 @@ hitData getCollision(Ray ray) {
 
 	// sphere intersections
 	for (int i = 0; i < spheresLength; i++) {
-		hit = sphereIntersect(ray, spheres[i]);
-		if (hit.didHit) {
-			if (hit.dist < result.dist) {
-				result = hit;
-				result.mat = materials[spheres[i].matIndex];
-			}
+		float t;
+		bool inside;
+		if (sphereIntersect(ray, spheres[i], t, inside) && t < result.dist) {
+			result.didHit = true;
+			result.dist = t;
+			result.inside = inside;
+			result.pos = ray.origin + ray.dir * t;
+			result.normal = normalize(result.pos - spheres[i].pos);
+			if (result.inside) result.normal = - result.normal;
+			result.mat = materials[spheres[i].matIndex];
 		}
 	}
 
@@ -374,19 +365,19 @@ vec3 environmentLight(Ray ray) {
 
 // snells law, gives refracted angle
 vec3 snells(vec3 dir, vec3 normal, float index, float cosine) {
-	float value = 1 - index * index * (1 - cosine * cosine);
+	float value = 1.0 - index * index * (1.0 - cosine * cosine);
 	// reflect
 	if (value < 0.0) return vec3(0);
 	// refract
-	return index * dir - (index * cosine - sqrt(value)) * normal;
+	return index * dir + (index * cosine - sqrt(value)) * normal;
 }
 
 
 // Schlicks approximation
 float fresnel(float index, float cosine) {
-        float r0 = (1 - index) / (1 + index);
+        float r0 = (1.0 - index) / (1.0 + index);
         r0 = r0 * r0;
-        return r0 + (1 - r0) * pow(1 - cosine, 5);
+        return r0 + (1.0 - r0) * pow(1.0 - cosine, 5);
 }
 
 
@@ -397,43 +388,50 @@ vec3 trace(Ray ray, inout uint seed) {
 
 	for (int i = 0; i <= maxBounces; i++) {
 		hit = getCollision(ray);
-		if (hit.didHit) {
-			Material mat = hit.mat;
 
-			ray.origin = hit.pos;
-
-			// transparent
-			if (mat.glass) {
-				float index = hit.inside ? 1.0 / mat.refraction : mat.refraction;
-				float cosine = dot(-ray.dir, hit.normal);
-				vec3 refractDir = snells(ray.dir, hit.normal, index, cosine);
-				if (refractDir == vec3(0) || fresnel(index, cosine) > random(seed)) ray.dir = reflectRay(ray.dir, hit.normal);
-				else ray.dir = refractDir;
-				// blur
-				ray.dir += (1 - mat.smoothness) * randBounce(hit.normal, seed);
-			}
-
-			// matt and reflective
-			else {
-				vec3 diffuseDir = randBounce(hit.normal, seed);
-				// chance of diffuse or specular reflection
-				if (random(seed) >= mat.gloss) ray.dir = diffuseDir;
-				// specular reflection / blur
-				else ray.dir = mat.smoothness * reflectRay(ray.dir, hit.normal) + (1 - mat.smoothness) * diffuseDir;
-			}
-
-			// light
-			vec3 emmited = mat.lightColor * mat.lightStrength;
-			light += emmited * color;
-			color *= mat.color * dot(hit.normal, ray.dir);
-			
-		}
-		else {
-			if (environmentLightFlag) {
-				light += environmentLight(ray) * color;
-			}
+		if (!hit.didHit) {
+			if (environmentLightFlag) light += environmentLight(ray) * color;
 			break;
 		}
+
+		Material mat = hit.mat;
+		ray.origin = hit.pos;
+
+		// Color from before surface hit
+		light += mat.lightColor * mat.lightStrength * color;
+
+		// transparent
+		if (mat.glass) {
+			float index = hit.inside ? mat.refraction : 1.0 / mat.refraction;
+			float cosine = dot(-ray.dir, hit.normal);
+			vec3 refractDir = snells(ray.dir, hit.normal, index, cosine);
+
+			// cosine of least dense side
+			float cosFresnel = index > 1.0 ? sqrt(max(0.0, 1.0 - index * index * (1.0 - cosine * cosine))) : cosine;
+			bool reflected = refractDir == vec3(0) || fresnel(index, cosFresnel) > random(seed);
+
+			// diffusion and blur
+			vec3 side = reflected ? hit.normal : -hit.normal;
+			vec3 dir = reflected ? reflectRay(ray.dir, hit.normal) : refractDir;
+			ray.dir = normalize(dir + (1.0 - mat.smoothness) * randBounce(side, seed));
+
+		}
+
+		// matt and reflective
+		else {
+			vec3 diffuseDir = randBounce(hit.normal, seed);
+			// chance of diffuse or specular reflection
+			if (random(seed) >= mat.gloss) {
+				ray.dir = diffuseDir;
+				color *= dot(hit.normal, diffuseDir) * 2.0;
+			}
+			// specular reflection / blur
+			else ray.dir = normalize(mat.smoothness * reflectRay(ray.dir, hit.normal) + (1.0 - mat.smoothness) * diffuseDir);
+		}
+
+		// tint
+		color *= mat.color;
+
 	}
 	return light;
 };
