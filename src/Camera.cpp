@@ -1,4 +1,4 @@
-#include "headers/Camera.h"
+#include "Camera.h"
 
 Camera::Camera(int width, int height, float fov) {
 	this->sensitivity = 5.0f;

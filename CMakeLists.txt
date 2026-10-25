@@ -86,8 +86,7 @@ add_executable(Ray_Tracing ${APP_SOURCES} ${SHADER_HEADER})
 
 target_include_directories(Ray_Tracing PRIVATE
         ${GEN_DIR} # generated ShaderStrings.h
-        src
-        src/headers)
+        src)
 
 target_link_libraries(Ray_Tracing PRIVATE
         glad imgui header_only_deps glfw nfd ${CMAKE_DL_LIBS})

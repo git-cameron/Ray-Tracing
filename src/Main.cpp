@@ -9,20 +9,17 @@
 // opengl headers
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
-#include<glm/glm.hpp>
-#include<glm/gtc/matrix_transform.hpp>
-#include<glm/gtc/type_ptr.hpp>
 
-#include "headers/GUI.h"
-#include "headers/Shader.h"
-#include "headers/VAO.h"
-#include "headers/VBO.h"
-#include "headers/Camera.h"
-#include "headers/Object.h"
-#include "headers/UBO.h"
-#include "headers/FBO.h"
-#include "headers/SSBO.h"
-#include "headers/BVH.h"
+#include "GUI.h"
+#include "Shader.h"
+#include "VAO.h"
+#include "VBO.h"
+#include "Camera.h"
+#include "Object.h"
+#include "UBO.h"
+#include "FBO.h"
+#include "SSBO.h"
+#include "BVH.h"
 
 
 // globals
@@ -30,22 +27,16 @@ int windowWidth = 1408;
 int windowHeight = 792;
 int width = 1280;
 int height = 720;
-int oldWidth = width;
-int oldHeight = height;
 int rayCount = 3;
 int maxBounces = 5;
-int oldTriSize = 0;
-float environmentLight = true;
-float prevX = 0.0f;
-float prevY = 0.0f;
+int tonemap = 3; // ACES fast
+float exposure = 1.0f;
 bool renderFlag = false;
 bool changed = false;
 bool lockedMovement = false;
+bool environmentLight = true;
+bool grayScale = false;
 Camera cam(width, height, 65.0f);
-
-// detects for keys just pressed
-bool escapeHeld = false;
-bool tabHeld = false;
 
 
 // declare functions before use
@@ -74,8 +65,8 @@ int main() {
 	};
 
 
-	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Raytrace", NULL, NULL);
-	if (window == NULL) {
+	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Raytrace", nullptr, nullptr);
+	if (window == nullptr) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
@@ -98,35 +89,30 @@ int main() {
 
 	glViewport(0, 0, width, height);
 
-
-	// create shaders
+	// ray shader
 	Shader rayShader(Default_vert, Ray_frag);
 	rayShader.use();
 	glUniform1i(glGetUniformLocation(rayShader.program, "text"), 0);
 
+	// tone shader
+	Shader toneShader(Default_vert, Tone_frag);
+	toneShader.use();
+	glUniform1i(glGetUniformLocation(toneShader.program, "text"), 0);
+	GLint exposureLoc = glGetUniformLocation(toneShader.program, "exposure");
+	GLint tonemapLoc = glGetUniformLocation(toneShader.program, "tonemap");
+	GLint grayscaleLoc = glGetUniformLocation(toneShader.program, "grayscale");
+
 	VAO VAO;
 	VBO VBO(vertices, sizeof(vertices));
-
 	VAO.bind();
 	VAO.linkVBO(VBO, 0);
 	VAO.linkVBO(VBO, 1);
 
 	FBO FBO(width, height);
-	FBO.unBind();
-
 	UBO UBO;
 	SSBO triSSBO;
-	triSSBO.unBind();
 	SSBO nodeSSBO;
-	nodeSSBO.unBind();
 	SSBO triIndexSSBO;
-	triIndexSSBO.unBind();
-
-
-	VAO.unBind();
-	VBO.unBind();
-	UBO.unBind();
-
 
 	// contains scene data
 	std::vector<Material> materials;
@@ -142,8 +128,9 @@ int main() {
 	float currentTime, dt;
 	float prevTime = glfwGetTime();
 	int accumulationFrame = 0;
-
-	FBO.bindTexture();
+	int oldWidth = width;
+	int oldHeight = height;
+	int oldTriSize = 0;
 
 	// imgui
     GUI gui(window);
@@ -164,32 +151,21 @@ int main() {
 			cam.updateRes(width, height);
 
 			// resize FBO and texture
-			FBO.bind();
 			FBO.resize(width, height);
-			FBO.unBind();
-			FBO.bindTexture();
 
 			// resize viewport
 			glViewport(0, 0, width, height);
-
 			changed = true;
 		}
 
 		if (changed) {
 			changed = false;
 			accumulationFrame = 1;
-		}
-		else {
-			accumulationFrame++;
-		}
+		} else accumulationFrame++;
 
-		// render scene to FBO
-		FBO.bind();
+		// scene data
 		rayShader.use();
-
-		// GPU data
 		UBO::Uniforms uni {cam.model, cam.pos, cam.focus, cam.focusDistance, cam.aperture, width, height, maxBounces, rayCount, spheres.size(), models.size(), accumulationFrame, environmentLight, 0, 0};
-		UBO.bind();
 		UBO.build(rayShader.program, uni, spheres, materials, models);
 
 		// SSBO data
@@ -203,14 +179,22 @@ int main() {
 			triIndexSSBO.buildTriIndex(nodeTriIndex);
 			triIndexSSBO.unBind();
 		}
-		
 
+		// ray trace pass
+		FBO.bindRay();
+		FBO.bindRayTexture();
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		VAO.bind();
+		// tone map pass
+		FBO.bindDisplay();
+		toneShader.use();
+		glUniform1f(exposureLoc, exposure);
+		glUniform1i(tonemapLoc, tonemap);
+		glUniform1i(grayscaleLoc, grayScale);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// gui logic
-		gui.mainLoop(FBO.texture, width, height, lockedMovement, renderFlag, changed, cam, dt, accumulationFrame, materials, spheres, models, modelExtras, 
+		gui.mainLoop(FBO.displayTexture, width, height, lockedMovement, renderFlag, changed, cam, dt, accumulationFrame, materials, spheres, models, modelExtras,
 			triangles, nodes, nodeTriIndex, rayCount, maxBounces, environmentLight);
 
 		FBO.unBind();
@@ -231,6 +215,7 @@ int main() {
 	nodeSSBO.deleteSSBO();
 	triIndexSSBO.deleteSSBO();
 	rayShader.deleteShader();
+	toneShader.deleteShader();
 	gui.deleteGUI();
 
 	glfwDestroyWindow(window);
@@ -247,6 +232,8 @@ void framebuffer_size_callback(GLFWwindow* window, int x, int y) {
 
 // mouse movement
 void mouse_position_callback(GLFWwindow* window, double xPos, double yPos) {
+	static float prevX = 0.0f;
+	static float prevY = 0.0f;
 	float x = static_cast<float>(xPos);
 	float y = static_cast<float>(yPos);
 
@@ -263,6 +250,9 @@ void mouse_position_callback(GLFWwindow* window, double xPos, double yPos) {
 
 // keyboard
 void input(GLFWwindow* window, float dt) {
+	// detects for keys just pressed
+	static bool escapeHeld = false;
+	static bool tabHeld = false;
 
 	// closes program
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {

@@ -6,7 +6,7 @@
 #include<string>
 #include<vector>
 #include<fstream>
-#include"headers/Object.h"
+#include "Object.h"
 
 static void saveImage(const std::string& filePath, int width, int height) {
 	void* data = malloc(width * height * 3);
@@ -20,47 +20,20 @@ static void saveImage(const std::string& filePath, int width, int height) {
 }
 
 
-static std::string getSavePath(std::string defaultPath, int mode) {
+static std::string getSavePath(std::string defaultPath, std::string filterName, std::string filterSpec) {
 	NFD_Init();
 	nfdchar_t* path = nullptr;
 	nfdsavedialogu8args_t args = {};
+	nfdfilteritem_t filterList[1] = {{filterName.c_str(), filterSpec.c_str()}};
+
 	args.defaultName = defaultPath.c_str();
-	nfdresult_t result = {};
+	args.filterList = filterList;
+	args.filterCount = 1;
 
-	switch (mode) {
-		// image
-	case 0: {
-		nfdfilteritem_t filterList[1] = {{"image", "png"}};
-		args.filterList = filterList;
-		args.filterCount = 1;
-		result = NFD_SaveDialogU8_With(&path, &args);
-		break;
-		}
-		
-		// scene
-	case 1: {
-		nfdfilteritem_t filterList[1] = {{"scene", "ray"}};
-		args.filterList = filterList;
-		args.filterCount = 1;
-		result = NFD_SaveDialogU8_With(&path, &args);
-		break;
-		}
-	}
-	
-
-	if (result == NFD_OKAY) {
+	if (NFD_SaveDialogU8_With(&path, &args) == NFD_OKAY) {
 		defaultPath = path;
 		NFD_FreePath(path);
-
-		switch (mode) {
-		case 0:
-			if (defaultPath.substr(defaultPath.find_last_of('.')) != ".png") defaultPath += ".png";
-			break;
-		case 1:
-			if (defaultPath.substr(defaultPath.find_last_of('.')) != ".ray") defaultPath += ".ray";
-			break;
-		}
-
+		if (defaultPath.substr(defaultPath.find_last_of('.')) != "." + filterSpec) defaultPath += "." + filterSpec;
 	}
 
 	// closed or error
@@ -71,39 +44,22 @@ static std::string getSavePath(std::string defaultPath, int mode) {
 }
 
 
-static std::string getLoadPath(int mode) {
+static std::string getLoadPath(std::string filterName, std::string filterSpec) {
 	NFD_Init();
 	nfdchar_t* path = nullptr;
 	std::string loadPath;
 	nfdopendialogu8args_t args = {};
-	nfdresult_t result = {};
+	nfdfilteritem_t filterList[1] = {{filterName.c_str(), filterSpec.c_str()}};
 
-	switch (mode) {
-		// model
-	case 0: {
-		nfdfilteritem_t filterList[1] = {{"model", "obj"}};
-		args.filterList = filterList;
-		args.filterCount = 1;
+	args.filterList = filterList;
+	args.filterCount = 1;
 
-		result = NFD_OpenDialogU8_With(&path, &args);
-		break;
-	}
 
-		// scene
-	case 1: {
-		nfdfilteritem_t filterList[1] = {{"scene", "ray"}};
-		args.filterList = filterList;
-		args.filterCount = 1;
-
-		result = NFD_OpenDialogU8_With(&path, &args);
-		break;
-		}
-	}
-	
-	if (result == NFD_OKAY) {
+	if (NFD_OpenDialogU8_With(&path, &args) == NFD_OKAY) {
 		loadPath = path;
 		NFD_FreePath(path);
 	}
+
 	// closed or error
 	else loadPath = "";
 

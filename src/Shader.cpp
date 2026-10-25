@@ -1,4 +1,4 @@
-#include "headers/Shader.h"
+#include "Shader.h"
 
 Shader::Shader(const char* vertexCode, const char* fragmentCode) {
 	GLuint vertex, fragment;

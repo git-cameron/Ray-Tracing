@@ -12,7 +12,6 @@
 
 vec4 debugValues = vec4(0);
 
-in vec2 texCoords;
 out vec4 FragColor;
 uniform sampler2D text;
 
@@ -286,7 +285,12 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 	if (bestTri >= 0) {
 		Triangle tri = triangles[nodeTriIndex[bestTri]];
 		result.didHit = true;
-		result.normal = normalize((1.0 - bestU - bestV) * tri.normA + bestU * tri.normB + bestV * tri.normC);
+
+		vec3 normal = (1.0 - bestU - bestV) * tri.normA + bestU * tri.normB + bestV * tri.normC;
+		// fallback if normal 0
+		if (dot(normal, normal) < epsilonSmall) normal = cross(tri.posB - tri.posA, tri.posC - tri.posA);
+		result.normal = normalize(normal);
+
 		result.inside = dot(ray.dir, result.normal) > 0.0;
 		if (result.inside) result.normal = - result.normal;
 	}
@@ -353,13 +357,9 @@ hitData getCollision(Ray ray) {
 
 
 vec3 randBounce(vec3 normal, inout uint seed) {
-	vec3 bounce = vec3(1.0);
-	bounce.x = randomNormalDist(seed);
-	bounce.y = randomNormalDist(seed);
-	bounce.z = randomNormalDist(seed);
-
+	vec3 bounce = normalize(vec3(randomNormalDist(seed), randomNormalDist(seed), randomNormalDist(seed)));
 	// same hemisphere
-	return normalize(bounce) * sign(dot(normal, bounce));
+	return dot(normal, bounce) < 0 ? -bounce : bounce;
 };
 
 
@@ -385,9 +385,10 @@ vec3 snells(vec3 dir, vec3 normal, float index, float cosine) {
 
 // Schlicks approximation
 float fresnel(float index, float cosine) {
-        float r0 = (1.0 - index) / (1.0 + index);
-        r0 = r0 * r0;
-        return r0 + (1.0 - r0) * pow(1.0 - cosine, 5);
+	float r0 = (1.0 - index) / (1.0 + index);
+	r0 *= r0;
+	// clamp prevents NaN
+	return r0 + (1.0 - r0) * pow(clamp(1.0 - cosine, 0.0, 1.0), 5);
 }
 
 
@@ -466,7 +467,7 @@ void main() {
 
 	// pixel accumulation from previous frames
 	float weight = 1.0 / accumulationFrame;
-	totalLight = (1.0 - weight) * texture(text, texCoords).xyz + totalLight * weight;
+	totalLight = (1.0 - weight) * texelFetch(text, ivec2(gl_FragCoord.xy), 0).rgb + totalLight * weight;
 	
 	// final output color
 	FragColor = vec4(totalLight, 1.0);

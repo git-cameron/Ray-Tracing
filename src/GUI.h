@@ -11,9 +11,9 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "FileHandler.h"
-#include "headers/Camera.h"
-#include "headers/Object.h"
-#include "headers/BVH.h"
+#include "Camera.h"
+#include "Object.h"
+#include "BVH.h"
 
 using namespace ImGui;
 
@@ -22,7 +22,7 @@ public:
 	GUI(GLFWwindow* window);
 	void mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, float dt, int accumulationFrame, 
 		std::vector<Material>& materials, std::vector<Sphere>& spheres, std::vector<Model>& models, std::vector<ModelExtra>& modelExtras, std::vector<Triangle>& triangles, 
-		std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, int& rayCount, int& maxBounces, float& environmentLight);
+		std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, int& rayCount, int& maxBounces, bool& environmentLight);
 
 	void render();
 	void deleteGUI();

@@ -1,4 +1,4 @@
-#include "headers/GUI.h"
+#include "GUI.h"
 
 GUI::GUI(GLFWwindow* window) {
 	// Setup Dear ImGui context
@@ -15,7 +15,7 @@ GUI::GUI(GLFWwindow* window) {
 
 void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, float dt, int accumulationFrame, 
 	std::vector<Material>& materials, std::vector<Sphere>& spheres, std::vector<Model>& models, std::vector<ModelExtra>& modelExtras, std::vector<Triangle>& triangles,
-	std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, int& rayCount, int& maxBounces, float& environmentLight) {
+	std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, int& rayCount, int& maxBounces, bool& environmentLight) {
 
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -59,7 +59,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 		SetNextWindowPos(ImVec2(0, 0));
 		if (Begin("Render", nullptr, ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)) {
 			viewSize = GetContentRegionAvail();
-			Image((void*)(intptr_t)texture, ImVec2(viewSize[0], viewSize[1] - GetFrameHeightWithSpacing()), ImVec2(0, 1), ImVec2(1, 0));
+			Image(texture, ImVec2(viewSize[0], viewSize[1] - GetFrameHeightWithSpacing()), ImVec2(0, 1), ImVec2(1, 0));
 			ProgressBar((float) accumulationFrame / renderFrames, ImVec2(-1.0f, 0.0f), (std::to_string(accumulationFrame) + "/" + std::to_string(renderFrames)).c_str());
 		}
 		End();
@@ -73,11 +73,11 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 	BeginMainMenuBar();
 	if (BeginMenu("File")) {
 		if (MenuItem("Save")) {
-			std::string scenePath = getSavePath("scene.ray", 1);
+			std::string scenePath = getSavePath("scene.ray", "scene", "ray");
 			if (!scenePath.empty()) saveScene(scenePath, materials, spheres);
 		}
 		if (MenuItem("Open")) {
-			std::string scenePath = getLoadPath(1);
+			std::string scenePath = getLoadPath("scene", "ray");
 			if (!scenePath.empty()) {
 				if (loadScene(scenePath, materials, spheres)) {
 					changed = true;
@@ -207,10 +207,10 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 
 				// render resolution
 				if (InputInt("Width##Render", &renderWidth, 0)) {
-					if (width < 1) width = viewSize.x;
+					if (renderWidth < 1) renderWidth = viewSize.x;
 				}
 				if (InputInt("Height##Render", &renderHeight, 0)) {
-					if (height < 1) height = viewSize.y;
+					if (renderHeight < 1) renderHeight = viewSize.y;
 				}
 				gcd = GCD(renderWidth, renderHeight);
 				Text("Aspect ratio %i:%i", renderWidth / gcd, renderHeight / gcd);
@@ -253,11 +253,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 
 			SeparatorText("Other");
 
-			bool environment = environmentLight;
-			if (Checkbox("Environment Light", &environment)) {
-				environmentLight = environment;
-				changed = true;
-			}
+			if (Checkbox("Environment Light", &environmentLight)) changed = true;
 
 			Checkbox("Render Camera##Checkbox", &renderCamFlag);
 
@@ -552,7 +548,7 @@ void GUI::mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement
 
 			// gets model path
 			if (Button((modelPath + "##NewModel").c_str())) {
-				modelPath = getLoadPath(0);
+				modelPath = getLoadPath("model", "obj");
 				if (modelPath.empty()) modelPath = "Select Model";
 			}
 			SetItemTooltip("Model Path (.obj)");
@@ -728,7 +724,7 @@ bool GUI::editModel(Model* model, ModelExtra* extra, const std::vector<Material>
 
 
 void GUI::startRender(int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, int& rayCount, int& maxBounces) {
-	savePath = getSavePath("render.png", 0);
+	savePath = getSavePath("render.png", "image", "png");
 	if (savePath.empty()) return;
 
 	// backup viewport settings

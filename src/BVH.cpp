@@ -1,4 +1,4 @@
-#include "headers/BVH.h"
+#include "BVH.h"
 
 BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 	this->modelTriangles = triangles;
