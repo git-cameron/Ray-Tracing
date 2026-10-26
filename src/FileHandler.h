@@ -8,11 +8,11 @@
 #include<fstream>
 #include "Object.h"
 
-static void saveImage(const std::string& filePath, int width, int height) {
-	void* data = malloc(width * height * 3);
-	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+static void saveImage(const std::string& filePath, const int width, const int height) {
+	void* data = malloc(width * height * 4);
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	stbi_flip_vertically_on_write(true);
-	stbi_write_png(filePath.c_str(), width, height, 3, data, width * 3);
+	stbi_write_png(filePath.c_str(), width, height, 4, data, width * 4);
 	free(data);
 
 	// opens image in default program
@@ -20,11 +20,11 @@ static void saveImage(const std::string& filePath, int width, int height) {
 }
 
 
-static std::string getSavePath(std::string defaultPath, std::string filterName, std::string filterSpec) {
+static std::string getSavePath(std::string defaultPath, const std::string& filterName, const std::string& filterSpec) {
 	NFD_Init();
 	nfdchar_t* path = nullptr;
 	nfdsavedialogu8args_t args = {};
-	nfdfilteritem_t filterList[1] = {{filterName.c_str(), filterSpec.c_str()}};
+	const nfdfilteritem_t filterList[1] = {{.name = filterName.c_str(), .spec = filterSpec.c_str()}};
 
 	args.defaultName = defaultPath.c_str();
 	args.filterList = filterList;
@@ -44,12 +44,12 @@ static std::string getSavePath(std::string defaultPath, std::string filterName, 
 }
 
 
-static std::string getLoadPath(std::string filterName, std::string filterSpec) {
+static std::string getLoadPath(const std::string& filterName, const std::string& filterSpec) {
 	NFD_Init();
 	nfdchar_t* path = nullptr;
 	std::string loadPath;
 	nfdopendialogu8args_t args = {};
-	nfdfilteritem_t filterList[1] = {{filterName.c_str(), filterSpec.c_str()}};
+	const nfdfilteritem_t filterList[1] = {{.name = filterName.c_str(), .spec = filterSpec.c_str()}};
 
 	args.filterList = filterList;
 	args.filterCount = 1;
@@ -118,7 +118,6 @@ static bool loadScene(const std::string& filePath, std::vector<Material>& materi
 	file >> line; // spheres
 	file >> spheresSize; // int
 
-
 	for (int i = 0; i < matSize; i++) {
 		Material mat;
 		file >> line; // material
@@ -172,7 +171,7 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 		return false;
 	}
 
-	tinyobj::attrib_t attrib = reader.GetAttrib();
+	const tinyobj::attrib_t attrib = reader.GetAttrib();
 	std::vector<tinyobj::shape_t> shapes = reader.GetShapes();
 	Model model;
 	model.startIndex = triangles.size();
@@ -185,49 +184,48 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 			tinyobj::index_t index{};
 			Triangle tri;
 
-
 			// vertex A
 			index = shape.mesh.indices[offset];
 
-			tri.posA.x = attrib.vertices[3 * size_t(index.vertex_index)];
-			tri.posA.y = attrib.vertices[3 * size_t(index.vertex_index) + 1];
-			tri.posA.z = attrib.vertices[3 * size_t(index.vertex_index) + 2];
+			tri.posA.x = attrib.vertices[3 * static_cast<size_t>(index.vertex_index)];
+			tri.posA.y = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 1];
+			tri.posA.z = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 2];
 
 			// no normal if negative
 			if (index.normal_index >= 0) {
-				tri.normA.x = attrib.normals[3 * size_t(index.normal_index)];
-				tri.normA.y = attrib.normals[3 * size_t(index.normal_index) + 1];
-				tri.normA.z = attrib.normals[3 * size_t(index.normal_index) + 2];
+				tri.normA.x = attrib.normals[3 * static_cast<size_t>(index.normal_index)];
+				tri.normA.y = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 1];
+				tri.normA.z = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 2];
 			}
 
 
 			// vertex B
 			index = shape.mesh.indices[offset + 1];
 
-			tri.posB.x = attrib.vertices[3 * size_t(index.vertex_index)];
-			tri.posB.y = attrib.vertices[3 * size_t(index.vertex_index) + 1];
-			tri.posB.z = attrib.vertices[3 * size_t(index.vertex_index) + 2];
+			tri.posB.x = attrib.vertices[3 * static_cast<size_t>(index.vertex_index)];
+			tri.posB.y = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 1];
+			tri.posB.z = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 2];
 
 			// no normal if negative
 			if (index.normal_index >= 0) {
-				tri.normB.x = attrib.normals[3 * size_t(index.normal_index)];
-				tri.normB.y = attrib.normals[3 * size_t(index.normal_index) + 1];
-				tri.normB.z = attrib.normals[3 * size_t(index.normal_index) + 2];
+				tri.normB.x = attrib.normals[3 * static_cast<size_t>(index.normal_index)];
+				tri.normB.y = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 1];
+				tri.normB.z = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 2];
 			}
 
 
 			// vertex C
 			index = shape.mesh.indices[offset + 2];
 
-			tri.posC.x = attrib.vertices[3 * size_t(index.vertex_index)];
-			tri.posC.y = attrib.vertices[3 * size_t(index.vertex_index) + 1];
-			tri.posC.z = attrib.vertices[3 * size_t(index.vertex_index) + 2];
+			tri.posC.x = attrib.vertices[3 * static_cast<size_t>(index.vertex_index)];
+			tri.posC.y = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 1];
+			tri.posC.z = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 2];
 
 			// no normal if negative
 			if (index.normal_index >= 0) {
-				tri.normC.x = attrib.normals[3 * size_t(index.normal_index)];
-				tri.normC.y = attrib.normals[3 * size_t(index.normal_index) + 1];
-				tri.normC.z = attrib.normals[3 * size_t(index.normal_index) + 2];
+				tri.normC.x = attrib.normals[3 * static_cast<size_t>(index.normal_index)];
+				tri.normC.y = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 1];
+				tri.normC.z = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 2];
 			}
 
 			triangles.push_back(tri);

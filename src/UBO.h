@@ -23,43 +23,37 @@ public:
 		int spheresLength; // 4
 		int modelsLength; // 4
 		int accumulationFrame; // 4
-		bool environmentLight; // 4
-		float pad1; // 4
-		float pad2; // 4
+		int environmentLight; // 4
+		float pad1 = 0; // 4
+		float pad2 = 0; // 4
 	};
 
 	UBO() {
 		glGenBuffers(1, &ID);
-	}
-
-	void build(const GLuint program, const UBO::Uniforms& uniforms, const std::vector<Sphere>& spheres, const std::vector<Material>& materials, const std::vector<Model>& models) const {
-		// reserve buffer size
-		glBufferData(GL_UNIFORM_BUFFER, sizeof(Uniforms) + sizeof(Sphere) * MAX_SPHERES + sizeof(Material) * MAX_MATERIALS + sizeof(Model) * MAX_MODELS, NULL, GL_STATIC_DRAW);
-
-		// set data
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Uniforms), &uniforms);
-		if (!spheres.empty()) glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Uniforms), sizeof(Sphere) * spheres.size(), &spheres[0]);
-		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Uniforms) + sizeof(Sphere) * MAX_SPHERES, sizeof(Material) * materials.size(), &materials[0]);
-		if (!models.empty()) glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Uniforms) + sizeof(Sphere) * MAX_SPHERES + sizeof(Material) * MAX_MATERIALS, sizeof(Model) * models.size(), &models[0]);
-
-		// bind
-		GLuint location = glGetUniformBlockIndex(program, "bindPoint");
-		glUniformBlockBinding(program, location, 0);
 		glBindBufferBase(GL_UNIFORM_BUFFER, 0, ID);
+		glBufferData(GL_UNIFORM_BUFFER, TOTAL_SIZE, nullptr, GL_STATIC_DRAW);
 	}
 
-	void bind() {
-		glBindBuffer(GL_UNIFORM_BUFFER, ID);
+	void updateScene(const Uniforms& uniforms, const std::vector<Sphere>& spheres, const std::vector<Material>& materials, const std::vector<Model>& models) const {
+		const int sphereCount = std::min(spheres.size(), static_cast<size_t>(MAX_SPHERES));
+		const int materialCount = std::min(materials.size(), static_cast<size_t>(MAX_MATERIALS));
+		const int modelCount = std::min(models.size(), static_cast<size_t>(MAX_MODELS));
+
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Uniforms), &uniforms);
+		if (sphereCount > 0) glBufferSubData(GL_UNIFORM_BUFFER, SPHERE_OFFSET, sizeof(Sphere) * sphereCount, spheres.data());
+		if (materialCount > 0) glBufferSubData(GL_UNIFORM_BUFFER, MATERIAL_OFFSET, sizeof(Material) * materialCount, materials.data());
+		if (modelCount > 0) glBufferSubData(GL_UNIFORM_BUFFER, MODEL_OFFSET, sizeof(Model) * modelCount, models.data());
 	}
 
-	void unBind() {
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	}
-
-	void deleteUBO() {
+	void deleteUBO() const {
 		glDeleteBuffers(1, &ID);
 	}
 
+private:
+	static constexpr int SPHERE_OFFSET = sizeof(Uniforms);
+	static constexpr int MATERIAL_OFFSET = SPHERE_OFFSET + sizeof(Sphere) * MAX_SPHERES;
+	static constexpr int MODEL_OFFSET = MATERIAL_OFFSET + sizeof(Material) * MAX_MATERIALS;
+	static constexpr int TOTAL_SIZE = MODEL_OFFSET + sizeof(Model) * MAX_MODELS;
 };
 
 

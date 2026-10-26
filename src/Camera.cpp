@@ -1,14 +1,12 @@
 #include "Camera.h"
 
-Camera::Camera(int width, int height, float fov) {
+Camera::Camera(const int width, const float fov) {
 	this->sensitivity = 5.0f;
 	this->moveSpeed = 1.0f;
 	this->dt = 0;
 	this->fov = fov;
 	this->focusDistance = 1.0f;
 	this->aperture = 0.0f;
-	this->width = width;
-	this->height = height;
 
 	focus = width / (2 * glm::tan(glm::radians(fov) / 2));
 	pos = glm::vec3(0, 0, -1);
@@ -19,20 +17,15 @@ Camera::Camera(int width, int height, float fov) {
 	model = glm::mat4(1);
 }
 
-void Camera::updateRes(int width, int height) {
-	this->width = width;
-	this->height = height;
+void Camera::updateFocus(const int width) {
 	focus = width / (2 * glm::tan(glm::radians(fov) / 2));
 }
 
-void Camera::updateFov() {
-	focus = width / (2 * glm::tan(glm::radians(fov) / 2));
-}
 
 void Camera::updateModel() {
-	glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(rotation.x), originalUp);
-	glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-rotation.y), originalSide);
-	glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(rotation.z), originalDirection);
+	const glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(rotation.x), originalUp);
+	const glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-rotation.y), originalSide);
+	const glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(rotation.z), originalDirection);
 
 	model = rotateX * rotateY * rotateZ;
 	side = model[0];
@@ -96,7 +89,7 @@ bool Camera::input(GLFWwindow* window) {
 	return moved;
 }
 
-void Camera::mouseInput(float dx, float dy, bool mouse) {
+void Camera::mouseInput(const float dx, const float dy, const bool mouse) {
 	if (mouse) {
 		rotation.x += dx * dt * sensitivity;
 		rotation.y -= dy * dt * sensitivity;
@@ -107,12 +100,12 @@ void Camera::mouseInput(float dx, float dy, bool mouse) {
 	}
 
 	// clamp between -180, 180
-	rotation = glm::mod((rotation + 180.0f), 360.0f) - 180.0f;
+	rotation = glm::mod(rotation + 180.0f, 360.0f) - 180.0f;
 
 	updateModel();
 }
 
 
-void Camera::updateDT(float dt) {
+void Camera::updateDT(const float dt) {
 	this->dt = dt;
 }

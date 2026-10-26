@@ -1,14 +1,12 @@
 #include "Shader.h"
 
 Shader::Shader(const char* vertexCode, const char* fragmentCode) {
-	GLuint vertex, fragment;
-		
-	vertex = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex, 1, &vertexCode, 0);
+	const GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex, 1, &vertexCode, nullptr);
 	glCompileShader(vertex);
 
-	fragment = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment, 1, &fragmentCode, 0);
+	const GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment, 1, &fragmentCode, nullptr);
 	glCompileShader(fragment);
 
 	program = glCreateProgram();
@@ -18,13 +16,12 @@ Shader::Shader(const char* vertexCode, const char* fragmentCode) {
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
-		
-	}
+}
 
-void Shader::use() {
+void Shader::use() const {
 	glUseProgram(program);
 }
 
-void Shader::deleteShader() {
+void Shader::deleteShader() const {
 	glDeleteProgram(program);
 }

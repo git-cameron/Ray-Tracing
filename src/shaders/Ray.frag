@@ -86,7 +86,7 @@ struct hitData {
 };
 
 
-layout(std140) uniform bindPoint {
+layout(std140, binding = 0) uniform bindPoint {
 	mat4 model; // 64
 	vec3 camPos; // 12
 	float focus; // 4
@@ -425,7 +425,6 @@ vec3 trace(Ray ray, inout uint seed) {
 			vec3 side = reflected ? hit.normal : -hit.normal;
 			vec3 dir = reflected ? reflectRay(ray.dir, hit.normal) : refractDir;
 			ray.dir = normalize(dir + (1.0 - mat.smoothness) * randBounce(side, seed));
-
 		}
 
 		// matt and reflective

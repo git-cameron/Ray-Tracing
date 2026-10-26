@@ -10,13 +10,13 @@ public:
 	GLuint rayTexture{};
 	GLuint displayTexture{};
 
-	FBO(int width, int height) {
+	FBO(const int width, const int height) {
 		glGenFramebuffers(1, &rayID);
 		glGenFramebuffers(1, &displayID);
 		resize(width, height);
 	}
 
-	void resize(int width, int height) {
+	void resize(const int width, const int height) {
 		glDeleteTextures(1, &rayTexture);
 		glDeleteTextures(1, &displayTexture);
 
@@ -39,11 +39,11 @@ public:
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, displayTexture, 0);
 	}
 
-	void bindRay() {
+	void bindRay() const {
 		glBindFramebuffer(GL_FRAMEBUFFER, rayID);
 	}
 
-	void bindDisplay() {
+	void bindDisplay() const {
 		glBindFramebuffer(GL_FRAMEBUFFER, displayID);
 
 	}
@@ -52,19 +52,19 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void bindRayTexture() {
+	void bindRayTexture() const {
 		glBindTexture(GL_TEXTURE_2D, rayTexture);
 	}
 
-	void bindDisplayTexture() {
+	void bindDisplayTexture() const {
 		glBindTexture(GL_TEXTURE_2D, displayTexture);
 	}
 
-	void unBindTexture() {
+	static void unBindTexture() {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	void deleteFBO() {
+	void deleteFBO() const {
 		glDeleteTextures(1, &rayTexture);
 		glDeleteFramebuffers(1, &rayID);
 		glDeleteTextures(1, &displayTexture);

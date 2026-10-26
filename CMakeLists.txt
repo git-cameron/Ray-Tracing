@@ -80,13 +80,14 @@ add_library(header_only_deps INTERFACE)
 target_include_directories(header_only_deps SYSTEM INTERFACE external)
 
 # ---------------- Main app ----------------
-file(GLOB APP_SOURCES CONFIGURE_DEPENDS src/*.cpp)
+file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS src/*.cpp)
 
 add_executable(Ray_Tracing ${APP_SOURCES} ${SHADER_HEADER})
 
 target_include_directories(Ray_Tracing PRIVATE
         ${GEN_DIR} # generated ShaderStrings.h
-        src)
+        src
+        )
 
 target_link_libraries(Ray_Tracing PRIVATE
         glad imgui header_only_deps glfw nfd ${CMAKE_DL_LIBS})

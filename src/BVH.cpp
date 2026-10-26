@@ -5,14 +5,14 @@ BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 	BVHNode root;
 	root.leftIndex = 0;
 	root.triIndex = 0;
-	root.triCount = (model.endIndex - model.startIndex) + 1;
+	root.triCount = model.endIndex - model.startIndex + 1;
 	nodes.push_back(root);
 	
 	// calculate triangle centres for subdivision
 	// BVHTriangle.xyz = centre, w = index
 	for (int i = model.startIndex; i <= model.endIndex; i++) {
 		Triangle tri = triangles[i];
-		BVHTriangles.push_back(glm::vec4((tri.posA + tri.posB + tri.posC) / 3.0f, i));
+		BVHTriangles.emplace_back((tri.posA + tri.posB + tri.posC) / 3.0f, i);
 	}
 
 	updateAABB(0);
@@ -20,7 +20,7 @@ BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 }
 
 
-void BVH::updateAABB(int index) {
+void BVH::updateAABB(const int index) {
 	nodes[index].min = glm::vec3(9999);
 	nodes[index].max = glm::vec3(-9999);
 

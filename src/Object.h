@@ -3,15 +3,14 @@
 
 #include<glm/glm.hpp>
 #include<glm/gtc/matrix_transform.hpp>
-#include<vector>
 
 #define MAX_SPHERES 100
 #define MAX_MATERIALS 100
 #define MAX_MODELS 100
 
-const glm::vec3 originalSide = glm::vec3(1, 0, 0);
-const glm::vec3 originalUp = glm::vec3(0, 1, 0);
-const glm::vec3 originalDirection = glm::vec3(0, 0, 1);
+constexpr glm::vec3 originalSide = glm::vec3(1, 0, 0);
+constexpr glm::vec3 originalUp = glm::vec3(0, 1, 0);
+constexpr glm::vec3 originalDirection = glm::vec3(0, 0, 1);
 
 struct Material {
 	glm::vec3 color = glm::vec3(1); // 12 
@@ -19,9 +18,9 @@ struct Material {
 	glm::vec3 lightColor = glm::vec3(0); // 12
 	float smoothness = 0.0f; // 4
 	float gloss = 0.0f; // 4
-	float glass = false; // 4
+	bool glass = false; // 4
 	float refraction = 1.0f; // 4
-	float pad; // 4
+	float pad = 0; // 4
 
 };
 
@@ -30,9 +29,9 @@ struct Sphere {
 	glm::vec3 pos = glm::vec3(0); // 12
 	float radius = 0.5f; // 4
 	int matIndex = 0; // 4
-	float pad1; // 4
-	float pad2; // 4
-	float pad3; // 4
+	float pad1 = 0; // 4
+	float pad2 = 0; // 4
+	float pad3 = 0; // 4
 };
 
 
@@ -69,29 +68,40 @@ struct Model {
 	int BVHIndex{}; // 4
 
 	void setTransform(const ModelExtra& data) {
-		glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.x), originalUp);
-		glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.y), originalSide);
-		glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data.rotation.z), originalDirection);
+		const glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.x), originalUp);
+		const glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.y), originalSide);
+		const glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data.rotation.z), originalDirection);
 
-		glm::mat4 translate = glm::translate(glm::mat4(1), data.pos);
-		glm::mat4 rotate = rotateX * rotateY * rotateZ;
-		glm::mat4 scale = glm::scale(glm::mat4(1), data.scale);
+		const glm::mat4 translate = glm::translate(glm::mat4(1), data.pos);
+		const glm::mat4 rotate = rotateX * rotateY * rotateZ;
+		const glm::mat4 scale = glm::scale(glm::mat4(1), data.scale);
 		transform = translate * rotate * scale;
 		invTransform = glm::inverse(transform);
 	}
 
 	void setTransform(const ModelExtra* data) {
-		glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.x), originalUp);
-		glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.y), originalSide);
-		glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data->rotation.z), originalDirection);
+		const glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.x), originalUp);
+		const glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.y), originalSide);
+		const glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data->rotation.z), originalDirection);
 
-		glm::mat4 translate = glm::translate(glm::mat4(1), data->pos);
-		glm::mat4 rotate = rotateX * rotateY * rotateZ;
-		glm::mat4 scale = glm::scale(glm::mat4(1), data->scale);
+		const glm::mat4 translate = glm::translate(glm::mat4(1), data->pos);
+		const glm::mat4 rotate = rotateX * rotateY * rotateZ;
+		const glm::mat4 scale = glm::scale(glm::mat4(1), data->scale);
 		transform = translate * rotate * scale;
 		invTransform = glm::inverse(transform);
 
 	}
+};
+
+struct BVHNode {
+	glm::vec3 min; // 12
+	int leftIndex = 0; // 4
+	glm::vec3 max; // 12
+	int triIndex; // 4
+	int triCount; // 4
+	float pad1; // 4
+	float pad2; // 4
+	float pad3; // 4
 };
 
 #endif

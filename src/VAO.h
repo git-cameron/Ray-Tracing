@@ -12,14 +12,14 @@ public:
 		glGenVertexArrays(1, &ID);
 	}
 
-	void linkVBO(VBO VBO, GLuint layout) {
+	void linkVBO(VBO VBO, const GLuint layout) {
 		VBO.bind();
-		glVertexAttribPointer(layout, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(layout * 2 * sizeof(float)));
+		glVertexAttribPointer(layout, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(layout * 2 * sizeof(float)));
 		glEnableVertexAttribArray(layout);
 		VBO.unBind();
 	}
 
-	void bind() {
+	void bind() const {
 		glBindVertexArray(ID);
 	}
 
@@ -27,7 +27,7 @@ public:
 		glBindVertexArray(0);
 	}
 
-	void deleteVAO() {
+	void deleteVAO() const {
 		glDeleteVertexArrays(1, &ID);
 	}
 };

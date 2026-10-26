@@ -2,27 +2,27 @@
 #define GUI_H
 
 #include<stb/stb_image_write.h>
+
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include<glad/glad.h>
 #include<glm/glm.hpp>
 #include<vector>
 #include<string>
 
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
 #include "FileHandler.h"
+#include "BVH.h"
+#include "Settings.h"
 #include "Camera.h"
 #include "Object.h"
-#include "BVH.h"
 
 using namespace ImGui;
 
 class GUI {
 public:
 	GUI(GLFWwindow* window);
-	void mainLoop(GLuint texture, int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, float dt, int accumulationFrame, 
-		std::vector<Material>& materials, std::vector<Sphere>& spheres, std::vector<Model>& models, std::vector<ModelExtra>& modelExtras, std::vector<Triangle>& triangles, 
-		std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, int& rayCount, int& maxBounces, bool& environmentLight);
+	void mainLoop(const GLuint& texture, float dt, State& state, RenderSettings& render, ToneSettings& tone, Scene& scene, Camera& cam);
 
 	void render();
 	void deleteGUI();
@@ -71,17 +71,27 @@ private:
 	std::string savePath;
 	std::string modelPath = "Select Model";
 
+	// Panels
+	void renderWindow(const GLuint& texture, RenderSettings& render, State& state, Camera& cam, ImVec2& viewSize) const;
+	void mainMenu(State& state, RenderSettings& render, Scene& scene, Camera& cam);
+	void viewPort(const GLuint& texture, RenderSettings& render, ImVec2& viewSize, ImGuiWindowFlags windowFlags) const;
+	void renderSettingsWindow(RenderSettings& render, ToneSettings& tone, State& state, Camera& cam, const ImVec2& viewSize, ImGuiWindowFlags windowFlags);
+	void cameraWindow(Camera& cam, const RenderSettings& render, State& state, ImGuiWindowFlags windowFlags);
+	void materialWindows(Scene& scene, State& state, ImGuiWindowFlags windowFlags);
+	void sphereWindows(Scene& scene, State& state, ImGuiWindowFlags windowFlags);
+	void modelWindows(Scene& scene, State& state, ImGuiWindowFlags windowFlags);
+	void debugWindow(float dt, const State& state, const Scene& scene, ImGuiWindowFlags windowFlags) const;
+
 	bool editMaterial(Material* mat);
 	bool editSphere(Sphere* sphere, const std::vector<Material>& materials);
-	bool editModel(Model* model, ModelExtra* Extra, const std::vector<Material>& materials);
+	bool editModel(Model* model, ModelExtra* extra, const std::vector<Material>& materials);
 
-	void startRender(int& width, int& height, bool& lockedMovement, bool& renderFlag, bool& changed, Camera& cam, int& rayCount, int& maxBounces);
+	void startRender(State& state, RenderSettings& render, Camera& cam);
 };
 
 static int GCD(int x, int y) {
-	int z;
 	while (y != 0) {
-		z = y;
+		const int z = y;
 		y = x % y;
 		x = z;
 	}

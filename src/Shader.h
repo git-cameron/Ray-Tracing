@@ -8,8 +8,8 @@ public:
 	GLuint program;
 
 	Shader(const char* vertexCode, const char* fragmentCode);
-	void use();
-	void deleteShader();
+	void use() const;
+	void deleteShader() const;
 };
 
 #endif
