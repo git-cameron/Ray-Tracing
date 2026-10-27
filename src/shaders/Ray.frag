@@ -67,13 +67,9 @@ struct Model {
 
 struct BVHNode {
 	vec3 min; // 12
-	int leftIndex; // 4
+	int leftIndex; // 4 (index of left child if triCount is 0, index of first triangle otherwise)
 	vec3 max; // 12
-	int triIndex; // 4
 	int triCount; // 4
-	float pad1; // 4
-	float pad2; // 4
-	float pad3; // 4
 };
 
 struct hitData {
@@ -230,7 +226,7 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 		// leaf node
 		if (node.triCount > 0) {
 			// triangle intersections
-			for (int i = node.triIndex; i < node.triIndex + node.triCount; i++) {
+			for (int i = node.leftIndex; i < node.leftIndex + node.triCount; i++) {
 				float t;
 				float u;
 				float v;

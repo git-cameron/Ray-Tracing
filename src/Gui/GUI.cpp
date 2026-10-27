@@ -1,7 +1,5 @@
 #include "GUI.h"
 
-
-
 GUI::GUI(GLFWwindow* window) {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();

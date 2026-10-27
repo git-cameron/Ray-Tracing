@@ -23,39 +23,32 @@ private:
 
 };
 
+
 static void addBVH(Model& model, std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex, const std::vector<Triangle>& triangles) {
-	model.BVHIndex = nodes.size();
-	const int triSize = nodeTriIndex.size();
+	const int nodeStart = nodes.size();
+	const int triStart = nodeTriIndex.size();
+
 	BVH bvh(model, triangles);
+	model.BVHIndex = nodeStart;
 
 	for (BVHNode& node : bvh.nodes) {
-		node.leftIndex += model.BVHIndex;
-		node.triIndex += triSize;
+		if (node.triCount > 0) node.leftIndex += triStart;
+		else node.leftIndex += nodeStart;
 		nodes.push_back(node);
 	}
-	for (const glm::vec4 & BVHTriangle : bvh.BVHTriangles) {
-		nodeTriIndex.push_back(BVHTriangle.w);
-	}
+	for (const glm::vec4 & BVHTriangle : bvh.BVHTriangles) nodeTriIndex.push_back(BVHTriangle.w);
 }
 
-static void deleteBVH(const int index, const int nextIndex, std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex) {
-	// last model
-	if (nextIndex == -1) {
-		nodeTriIndex.erase(nodeTriIndex.begin() + nodes[index].triIndex, nodeTriIndex.end());
-		nodes.erase(nodes.begin() + index, nodes.end());
-	}
-	else {
-		const int indexDiff = nextIndex - index;
-		const int triDiff = nodes[nextIndex].triIndex - nodes[index].triIndex;
 
-		nodeTriIndex.erase(nodeTriIndex.begin() + nodes[index].triIndex, nodeTriIndex.begin() + nodes[nextIndex].triIndex);
-		nodes.erase(nodes.begin() + index, nodes.begin() + nextIndex);
+static void deleteBVH(const int nodeStart, const int nodeCount, const int triStart, const int triCount, std::vector<BVHNode>& nodes, std::vector<int>& nodeTriIndex) {
+	nodeTriIndex.erase(nodeTriIndex.begin() + triStart, nodeTriIndex.begin() + triStart + triCount);
+	nodes.erase(nodes.begin() + nodeStart, nodes.begin() + nodeStart + nodeCount);
 
-		for (int i = index; i < nodes.size(); i++) {
-			nodes[i].leftIndex -= indexDiff;
-			nodes[i].triIndex -= triDiff;
-		}
+	for (int i = nodeStart; i < nodes.size(); i++) {
+		if (nodes[i].triCount > 0) nodes[i].leftIndex -= triCount;
+		else nodes[i].leftIndex -= nodeCount;
 	}
+	for (int i = triStart; i < nodeTriIndex.size(); i++) nodeTriIndex[i] -= triCount;
 }
 
 #endif

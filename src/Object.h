@@ -95,13 +95,9 @@ struct Model {
 
 struct BVHNode {
 	glm::vec3 min; // 12
-	int leftIndex = 0; // 4
+	int leftIndex = 0; // 4 (index of left child if triCount is 0, index of first triangle otherwise)
 	glm::vec3 max; // 12
-	int triIndex; // 4
 	int triCount; // 4
-	float pad1; // 4
-	float pad2; // 4
-	float pad3; // 4
 };
 
 #endif

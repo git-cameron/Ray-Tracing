@@ -51,24 +51,23 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 
 				if (TreeNodeEx(("Model " + std::to_string(i)).c_str())) {
 					// edit model
-					Model* model = &scene.models[i];
-					ModelExtra* extra = &scene.modelExtras[i];
-					state.changed = editModel(model, extra, scene.materials) || state.changed;
+					state.changed = editModel(&scene.models[i], &scene.modelExtras[i], scene.materials) || state.changed;
 
 					// delete models
 					SeparatorText("Delete Model");
 					if (Button(("Delete##2" + std::to_string(i)).c_str())) {
-						const int bvhDiff = i == scene.models.size() - 1 ? 0 : scene.models[i + 1].BVHIndex - scene.models[i].BVHIndex;
-						deleteBVH(scene.models[i].BVHIndex, bvhDiff == 0 ? -1 : scene.models[i + 1].BVHIndex, scene.nodes, scene.nodeTriIndex);
+						const Model& model = scene.models[i];
+						const int nodeCount = (i + 1 < scene.models.size() ? scene.models[i + 1].BVHIndex : scene.nodes.size()) - model.BVHIndex;
+						const int triCount = model.endIndex - model.startIndex + 1;
+						deleteBVH(model.BVHIndex, nodeCount, model.startIndex, triCount, scene.nodes, scene.nodeTriIndex);
 
-						const int modelSize = scene.models[i].endIndex - scene.models[i].startIndex + 1;
-						scene.triangles.erase(scene.triangles.begin() + scene.models[i].startIndex, scene.triangles.begin() + scene.models[i].endIndex + 1);
+						scene.triangles.erase(scene.triangles.begin() + model.startIndex, scene.triangles.begin() + model.endIndex + 1);
 						scene.models.erase(scene.models.begin() + i);
 						scene.modelExtras.erase(scene.modelExtras.begin() + i);
 						for (int j = i; j < scene.models.size(); j++) {
-							scene.models[j].startIndex -= modelSize;
-							scene.models[j].endIndex -= modelSize;
-							scene.models[j].BVHIndex -= bvhDiff;
+							scene.models[j].startIndex -= triCount;
+							scene.models[j].endIndex -= triCount;
+							scene.models[j].BVHIndex -= nodeCount;
 						}
 						state.changed = true;
 					}
@@ -94,11 +93,13 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 
 			if (Button("Add Model")) {
 				if (loadModel(modelPath, scene.models, scene.modelExtras, scene.triangles)) {
-					addBVH(scene.models[scene.models.size() - 1], scene.nodes, scene.nodeTriIndex, scene.triangles);
-					scene.modelExtras[scene.modelExtras.size() - 1] = tempModelExtra;
-					scene.models[scene.models.size() - 1].transform = tempModel.transform;
-					scene.models[scene.models.size() - 1].invTransform = tempModel.invTransform;
-					scene.models[scene.models.size() - 1].matIndex = tempModel.matIndex;
+					Model& model = scene.models.back();
+					addBVH(model, scene.nodes, scene.nodeTriIndex, scene.triangles);
+
+					scene.modelExtras.back() = tempModelExtra;
+					model.transform = tempModel.transform;
+					model.invTransform = tempModel.invTransform;
+					model.matIndex = tempModel.matIndex;
 					state.changed = true;
 				}
 			}

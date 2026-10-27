@@ -4,7 +4,6 @@ BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 	this->modelTriangles = triangles;
 	BVHNode root;
 	root.leftIndex = 0;
-	root.triIndex = 0;
 	root.triCount = model.endIndex - model.startIndex + 1;
 	nodes.push_back(root);
 	
@@ -24,8 +23,10 @@ void BVH::updateAABB(const int index) {
 	nodes[index].min = glm::vec3(9999);
 	nodes[index].max = glm::vec3(-9999);
 
+	const int firstIndex = nodes[index].leftIndex;
+
 	for (int i = 0; i < nodes[index].triCount; i++) {
-		Triangle tri = modelTriangles[BVHTriangles[nodes[index].triIndex + i].w];
+		Triangle tri = modelTriangles[BVHTriangles[firstIndex + i].w];
 
 		// min bounds
 		nodes[index].min = glm::min(nodes[index].min, tri.posA);
@@ -44,6 +45,10 @@ void BVH::split(int index, int depth) {
 	// base case
 	if (depth >= BVHStackSize) return;
 
+	// save before leftIndex overwritten by child index
+	const int firstIndex = nodes[index].leftIndex;
+	const int triCount = nodes[index].triCount;
+
 	// split on long axis
 	glm::vec3 size = nodes[index].max - nodes[index].min;
 	int axis = 0;
@@ -52,8 +57,8 @@ void BVH::split(int index, int depth) {
 	float splitPos = nodes[index].min[axis] + size[axis] * 0.5f;
 
 	// sort triangles into sides
-	int i = nodes[index].triIndex;
-	int j = nodes[index].triIndex + nodes[index].triCount - 1;
+	int i = firstIndex;
+	int j = firstIndex + triCount - 1;
 	while (i <= j) {
 		if (BVHTriangles[i][axis] < splitPos) i++;
 		else {
@@ -65,23 +70,26 @@ void BVH::split(int index, int depth) {
 		}
 	}
 
-	BVHNode left;
-	left.triCount = i - nodes[index].triIndex;
+	int leftCount = i - firstIndex;
 
 	// one sided
-	if (left.triCount == 0 || left.triCount == nodes[index].triCount) return;
-	left.triIndex = nodes[index].triIndex;
-	nodes[index].leftIndex = nodes.size();
-	nodes.push_back(left);
+	if (leftCount == 0 || leftCount == triCount) return;
 
-	BVHNode right;
-	right.triIndex = i;
-	right.triCount = nodes[index].triCount - left.triCount;
+	BVHNode left, right;
+	left.leftIndex = firstIndex;
+	left.triCount = leftCount;
+	right.leftIndex = i;
+	right.triCount = triCount - leftCount;
+
+	int childIndex = nodes.size();
+	nodes.push_back(left);
 	nodes.push_back(right);
+
+	nodes[index].leftIndex = childIndex;
 	nodes[index].triCount = 0;
 
-	updateAABB(nodes[index].leftIndex);
-	updateAABB(nodes[index].leftIndex + 1);
-	split(nodes[index].leftIndex, depth + 1);
-	split(nodes[index].leftIndex + 1, depth + 1);
+	updateAABB(childIndex);
+	updateAABB(childIndex + 1);
+	split(childIndex, depth + 1);
+	split(childIndex + 1, depth + 1);
 }
