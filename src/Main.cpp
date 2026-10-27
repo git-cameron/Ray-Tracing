@@ -124,7 +124,7 @@ int main() {
 			glViewport(0, 0, render.width, render.height);
 			state.changed = true;
 		}
-
+		bool updateScene = state.changed;
 		if (state.changed) {
 			state.changed = false;
 			state.accumulationFrame = 1;
@@ -147,7 +147,8 @@ int main() {
 			.accumulationFrame = state.accumulationFrame,
 			.environmentLight = render.environmentLight
 		};
-		UBO.updateScene(uni, scene.spheres, scene.materials, scene.models);
+		UBO.updateUniforms(uni);
+		if (updateScene) UBO.updateScene(scene.spheres, scene.materials, scene.models);
 
 		// SSBO data
 		if (scene.triangles.size() != oldTriSize) {

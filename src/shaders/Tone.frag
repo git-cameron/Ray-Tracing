@@ -34,25 +34,25 @@ vec3 acesFitted(vec3 colour) {
 
 void main() {
     vec3 colour = texelFetch(text, ivec2(gl_FragCoord.xy), 0).rgb * exposure;
-    if (grayscale) colour = vec3(dot(colour, weights));;
+    if (grayscale) colour = vec3(dot(colour, weights));
 
     switch (tonemap) {
-            case 1:
-                colour = reinhard(colour);
-                break;
-            case 2:
-                colour = jodieReinhard(colour);
-                break;
-            case 3:
-                colour = acesFast(colour);
-                break;
-            case 4:
-                colour = acesFitted(colour);
-                break;
-            // no tone map
-            case 0:
-            default:
-                break;
+        case 1:
+            colour = reinhard(colour);
+            break;
+        case 2:
+            colour = jodieReinhard(colour);
+            break;
+        case 3:
+            colour = acesFast(colour);
+            break;
+        case 4:
+            colour = acesFitted(colour);
+            break;
+        // no tone map
+        case 0:
+        default:
+            break;
     }
 
     // linear to srgb

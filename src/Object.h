@@ -22,6 +22,17 @@ struct Material {
 	float refraction = 1.0f; // 4
 	float pad = 0; // 4
 
+	Material toLinear() const {
+		Material mat = *this;
+		mat.color = {srgbToLinear(color.r), srgbToLinear(color.g), srgbToLinear(color.b)};
+		mat.lightColor = {srgbToLinear(lightColor.r), srgbToLinear(lightColor.g), srgbToLinear(lightColor.b)};
+		return mat;
+	}
+
+private:
+	static float srgbToLinear(const float colour) {
+		return colour <= 0.04045f ? colour / 12.92f : std::pow((colour + 0.055f) / 1.055f, 2.4f);
+	}
 };
 
 
@@ -89,7 +100,6 @@ struct Model {
 		const glm::mat4 scale = glm::scale(glm::mat4(1), data->scale);
 		transform = translate * rotate * scale;
 		invTransform = glm::inverse(transform);
-
 	}
 };
 

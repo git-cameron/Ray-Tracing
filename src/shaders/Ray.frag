@@ -158,7 +158,7 @@ bool sphereIntersect(Ray ray, Sphere sphere, out float dist, out bool inside) {
 		inside = true;
 	}
 	return dist > epsilonDist;
-};
+}
 
 
 // Möller–Trumbore
@@ -184,7 +184,7 @@ bool triangleIntersect(Ray ray, Triangle tri, out float t, out float u, out floa
 	// hit distance
 	t = dot(AC, AOxAB) * invDet;
 	return t > epsilonDist;
-};
+}
 
 
 // slab method
@@ -197,7 +197,7 @@ float aabbIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax) {
 	float tmin = max(max(tnear.x, tnear.y), max(tnear.z, 0.0));
 	float tmax = min(min(tfar.x, tfar.y), tfar.z);
 	return tmin <= tmax ? tmin : infinity;
-};
+}
 
 
 hitData bvhIntersect(Ray ray, Model model, float maxDist) {
@@ -292,7 +292,7 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 	}
 
 	return result;
-};
+}
 
 
 hitData getCollision(Ray ray) {
@@ -349,19 +349,19 @@ hitData getCollision(Ray ray) {
 	ray.dir = originalDir;
 
 	return result;
-};
+}
 
 
 vec3 randBounce(vec3 normal, inout uint seed) {
 	vec3 bounce = normalize(vec3(randomNormalDist(seed), randomNormalDist(seed), randomNormalDist(seed)));
 	// same hemisphere
 	return dot(normal, bounce) < 0 ? -bounce : bounce;
-};
+}
 
 
 vec3 reflectRay(vec3 dir, vec3 normal) {
 	return normalize(dir - 2.0 * dot(normal, dir) * normal);
-};
+}
 
 
 vec3 environmentLight(Ray ray) {
@@ -439,7 +439,7 @@ vec3 trace(Ray ray, inout uint seed) {
 		color *= mat.color;
 	}
 	return light;
-};
+}
 	
 
 void main() {
@@ -468,4 +468,4 @@ void main() {
 	FragColor = vec4(totalLight, 1.0);
 	//FragColor = vec4(debugValues.x / 300.0, debugValues.y / 100.0, 0.0, 1.0);
 	//if (any(isnan(totalLight))) FragColor = vec4(1, 0, 1, 1);
-};
+}
