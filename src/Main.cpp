@@ -161,7 +161,20 @@ int main() {
 		// ray trace pass
 		FBO.bindRay();
 		FBO.bindRayTexture();
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		// Tiling
+		int tilesX = (render.width + tileSize - 1) / tileSize;
+		int tilesY = (render.height + tileSize - 1) / tileSize;
+		glEnable(GL_SCISSOR_TEST);
+		for (int x = 0; x < tilesX; x++) {
+			int xPos = x * tileSize;
+			for (int y = 0; y < tilesY; y++) {
+				int yPos = y * tileSize;
+				glScissor(xPos, yPos, tileSize, tileSize);
+				glDrawArrays(GL_TRIANGLES, 0, 6);
+			}
+		}
+		glDisable(GL_SCISSOR_TEST);
 
 		// tone map pass
 		FBO.bindDisplay();

@@ -8,6 +8,7 @@
 constexpr float defaultFov = 65.0f;
 constexpr float defaultWindowWidth = 1408;
 constexpr float defaultWindowHeight = 792;
+constexpr int tileSize = 128;
 
 constexpr const char* toneMapNames[5] = {
     "None", "Reinhard", "Jodie Reinhard", "ACES (fast)", "ACES (fitted)"

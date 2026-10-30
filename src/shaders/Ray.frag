@@ -10,8 +10,6 @@
 #define maxModels 100
 #define BVHStackSize 32
 
-vec4 debugValues = vec4(0);
-
 out vec4 FragColor;
 uniform sampler2D text;
 
@@ -237,16 +235,10 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 					bestU = u;
 					bestV = v;
 				}
-
-				// tri tests debug
-				debugValues.y++;
 			}
 		}
 
 		else {
-			// node tests debug
-			debugValues.x += 2;
-
 			BVHNode left = nodes[node.leftIndex];
 			BVHNode right = nodes[node.leftIndex + 1];
 
@@ -409,6 +401,9 @@ vec3 trace(Ray ray, inout uint seed) {
 
 		// transparent
 		if (mat.glass) {
+			// absorption from glass over distance
+			if (hit.inside) color *= pow(max(mat.color, vec3(epsilonSmall)), vec3(hit.dist));
+
 			float index = hit.inside ? mat.refraction : 1.0 / mat.refraction;
 			float cosine = dot(-ray.dir, hit.normal);
 			vec3 refractDir = snells(ray.dir, hit.normal, index, cosine);
@@ -433,10 +428,15 @@ vec3 trace(Ray ray, inout uint seed) {
 			}
 			// specular reflection / blur
 			else ray.dir = normalize(mat.smoothness * reflectRay(ray.dir, hit.normal) + (1.0 - mat.smoothness) * diffuseDir);
+
+			// tint
+			color *= mat.color;
 		}
 
-		// tint
-		color *= mat.color;
+		// russian roulette
+		float p = clamp(max(max(color.r, color.g), color.b), epsilonSmall, 1.0);
+		if (random(seed) > p) break;
+		color /= p;
 	}
 	return light;
 }
@@ -466,6 +466,4 @@ void main() {
 	
 	// final output color
 	FragColor = vec4(totalLight, 1.0);
-	//FragColor = vec4(debugValues.x / 300.0, debugValues.y / 100.0, 0.0, 1.0);
-	//if (any(isnan(totalLight))) FragColor = vec4(1, 0, 1, 1);
 }
