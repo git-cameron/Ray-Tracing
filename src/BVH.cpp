@@ -11,7 +11,8 @@ BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 	// BVHTriangle.xyz = centre, w = index
 	for (int i = model.startIndex; i <= model.endIndex; i++) {
 		Triangle tri = triangles[i];
-		BVHTriangles.emplace_back((tri.posA + tri.posB + tri.posC) / 3.0f, i);
+		BVHTriangles.emplace_back((tri.posA + tri.posB + tri.posC) / 3.0f);
+		BVHTriIndexes.push_back(i);
 	}
 
 	updateAABB(0);
@@ -20,13 +21,13 @@ BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 
 
 void BVH::updateAABB(const int index) {
-	nodes[index].min = glm::vec3(9999);
-	nodes[index].max = glm::vec3(-9999);
+	nodes[index].min = glm::vec3(1e10);
+	nodes[index].max = glm::vec3(-1e10);
 
 	const int firstIndex = nodes[index].leftIndex;
 
 	for (int i = 0; i < nodes[index].triCount; i++) {
-		Triangle tri = modelTriangles[BVHTriangles[firstIndex + i].w];
+		const Triangle& tri = modelTriangles[BVHTriIndexes[firstIndex + i]];
 
 		// min bounds
 		nodes[index].min = glm::min(nodes[index].min, tri.posA);
@@ -48,24 +49,53 @@ void BVH::split(int index, int depth) {
 	// save before leftIndex overwritten by child index
 	const int firstIndex = nodes[index].leftIndex;
 	const int triCount = nodes[index].triCount;
+	AABB parent;
+	for (int i = firstIndex; i < firstIndex + triCount; i++) parent.grow(glm::vec3(BVHTriangles[i]));
 
-	// split on long axis
-	glm::vec3 size = nodes[index].max - nodes[index].min;
-	int axis = 0;
-	if (size.y > size.x) axis = 1;
-	if (size.z > size[axis]) axis = 2;
-	float splitPos = nodes[index].min[axis] + size[axis] * 0.5f;
+	int bestAxis = 0;
+	float bestPos = 0;
+	float bestCost = 1e10;
+	for (int axis = 0; axis < 3; axis++) {
+		float boundsMin = parent.min[axis];
+		float boundsMax = parent.max[axis];
+		if (boundsMin == boundsMax) continue;
+		float scale = (boundsMax - boundsMin) / SplitPanes;
+
+		for (int i = 0; i < SplitPanes; i++) {
+			float candidate = boundsMin + i * scale;
+
+			// Surface Area Heuristic
+			AABB left, right;
+			for (int tri = firstIndex; tri < firstIndex + triCount; tri++) {
+				glm::vec3 centre = BVHTriangles[tri];
+				if (centre[axis] < candidate) left.grow(centre);
+				else right.grow(centre);
+			}
+			float cost = left.cost() + right.cost();
+			if (cost < bestCost) {
+				bestCost = cost;
+				bestAxis = axis;
+				bestPos = candidate;
+			}
+		}
+	}
+
+	// Not worth splitting
+	if (parent.cost() <= bestCost) return;
 
 	// sort triangles into sides
 	int i = firstIndex;
 	int j = firstIndex + triCount - 1;
 	while (i <= j) {
-		if (BVHTriangles[i][axis] < splitPos) i++;
+		if (BVHTriangles[i][bestAxis] < bestPos) i++;
 		else {
 			// swap triangles
-			glm::vec4 temp = BVHTriangles[i];
+			glm::vec3 tempTri = BVHTriangles[i];
+			int tempIndex = BVHTriIndexes[i];
 			BVHTriangles[i] = BVHTriangles[j];
-			BVHTriangles[j] = temp;
+			BVHTriIndexes[i] = BVHTriIndexes[j];
+			BVHTriangles[j] = tempTri;
+			BVHTriIndexes[j] = tempIndex;
 			j--;
 		}
 	}

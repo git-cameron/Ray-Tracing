@@ -6,12 +6,31 @@
 #include "Object.h"
 
 #define BVHStackSize 32
+#define SplitPanes 16
+
+struct AABB {
+	glm::vec3 min = glm::vec3(1e10f);
+	glm::vec3 max = glm::vec3(-1e10f);
+	int count = 0;
+
+	void grow(const glm::vec3 pos) {
+		count++;
+		min = glm::min(min, pos);
+		max = glm::max(max, pos);
+	}
+
+	float cost() const {
+		const glm::vec3 e = max - min;
+		return count * (e.x * e.y + e.y * e.z + e.z * e.x);
+	}
+};
 
 class BVH {
 
 public:
 	std::vector<BVHNode> nodes;
-	std::vector<glm::vec4> BVHTriangles;
+	std::vector<glm::vec3> BVHTriangles;
+	std::vector<int> BVHTriIndexes;
 
 	BVH(const Model& model, const std::vector<Triangle>& triangles);
 
@@ -20,7 +39,6 @@ private:
 
 	void updateAABB(int index);
 	void split(int index, int depth);
-
 };
 
 
@@ -36,7 +54,7 @@ static void addBVH(Model& model, std::vector<BVHNode>& nodes, std::vector<int>& 
 		else node.leftIndex += nodeStart;
 		nodes.push_back(node);
 	}
-	for (const glm::vec4 & BVHTriangle : bvh.BVHTriangles) nodeTriIndex.push_back(BVHTriangle.w);
+	for (int index: bvh.BVHTriIndexes) nodeTriIndex.push_back(index);
 }
 
 
