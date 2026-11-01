@@ -35,7 +35,9 @@ public:
 	BVH(const Model& model, const std::vector<Triangle>& triangles);
 
 private:
-	std::vector<Triangle> modelTriangles;
+	std::vector<glm::vec3> triMin;
+	std::vector<glm::vec3> triMax;
+	int firstTri = 0;
 
 	void updateAABB(int index);
 	void split(int index, int depth);

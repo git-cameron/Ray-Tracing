@@ -1,18 +1,19 @@
 #include "BVH.h"
 
 BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
-	this->modelTriangles = triangles;
+	firstTri = model.startIndex;
 	BVHNode root;
 	root.leftIndex = 0;
 	root.triCount = model.endIndex - model.startIndex + 1;
 	nodes.push_back(root);
-	
-	// calculate triangle centres for subdivision
-	// BVHTriangle.xyz = centre, w = index
+
+	// calculate triangle centres, minx and max for subdivision
 	for (int i = model.startIndex; i <= model.endIndex; i++) {
 		Triangle tri = triangles[i];
 		BVHTriangles.emplace_back((tri.posA + tri.posB + tri.posC) / 3.0f);
 		BVHTriIndexes.push_back(i);
+		triMin.push_back(glm::min(glm::min(tri.posA, tri.posB), tri.posC));
+		triMax.push_back(glm::max(glm::max(tri.posA, tri.posB), tri.posC));
 	}
 
 	updateAABB(0);
@@ -21,23 +22,13 @@ BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 
 
 void BVH::updateAABB(const int index) {
-	nodes[index].min = glm::vec3(1e10);
-	nodes[index].max = glm::vec3(-1e10);
-
-	const int firstIndex = nodes[index].leftIndex;
+	nodes[index].min = glm::vec3(std::numeric_limits<float>::max());
+	nodes[index].max = glm::vec3(std::numeric_limits<float>::lowest());
 
 	for (int i = 0; i < nodes[index].triCount; i++) {
-		const Triangle& tri = modelTriangles[BVHTriIndexes[firstIndex + i]];
-
-		// min bounds
-		nodes[index].min = glm::min(nodes[index].min, tri.posA);
-		nodes[index].min = glm::min(nodes[index].min, tri.posB);
-		nodes[index].min = glm::min(nodes[index].min, tri.posC);
-
-		// max bounds
-		nodes[index].max = glm::max(nodes[index].max, tri.posA);
-		nodes[index].max = glm::max(nodes[index].max, tri.posB);
-		nodes[index].max = glm::max(nodes[index].max, tri.posC);
+		const int tri = BVHTriIndexes[nodes[index].leftIndex + i] - firstTri;
+		nodes[index].min = glm::min(nodes[index].min, triMin[tri]);
+		nodes[index].max = glm::max(nodes[index].max, triMax[tri]);
 	}
 }
 
@@ -54,14 +45,14 @@ void BVH::split(int index, int depth) {
 
 	int bestAxis = 0;
 	float bestPos = 0;
-	float bestCost = 1e10;
+	float bestCost = std::numeric_limits<float>::max();
 	for (int axis = 0; axis < 3; axis++) {
 		float boundsMin = parent.min[axis];
 		float boundsMax = parent.max[axis];
 		if (boundsMin == boundsMax) continue;
 		float scale = (boundsMax - boundsMin) / SplitPanes;
 
-		for (int i = 0; i < SplitPanes; i++) {
+		for (int i = 1; i < SplitPanes; i++) {
 			float candidate = boundsMin + i * scale;
 
 			// Surface Area Heuristic
