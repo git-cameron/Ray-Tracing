@@ -17,7 +17,7 @@ public:
 	glm::vec3 pos{};
 	glm::vec3 rotation{};
 
-	Camera(int width, float fov);
+	Camera(int width, float fov, float sensitivity);
 	void updateFocus(int width);
 	bool input(GLFWwindow* window);
 	void mouseInput(float dx, float dy, bool mouse);
@@ -25,9 +25,9 @@ public:
 	void updateModel();
 
 private:
-	const glm::vec3 originalSide = glm::vec3(1, 0, 0);
-	const glm::vec3 originalUp = glm::vec3(0, 1, 0);
-	const glm::vec3 originalDirection = glm::vec3(0, 0, 1);
+	static constexpr glm::vec3 originalSide = glm::vec3(1, 0, 0);
+	static constexpr glm::vec3 originalUp = glm::vec3(0, 1, 0);
+	static constexpr glm::vec3 originalDirection = glm::vec3(0, 0, 1);
 
 	float dt;
 	glm::vec3 side{};

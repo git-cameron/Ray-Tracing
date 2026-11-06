@@ -29,7 +29,7 @@ int main() {
 	RenderSettings render;
 	ToneSettings tone;
 	Scene scene;
-	Camera cam(render.width, defaultFov);
+	Camera cam(render.width, defaultFov, defaultSensitivity);
 
 	glfwInit();
 

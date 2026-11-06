@@ -73,27 +73,27 @@ void GUI::mainMenu(State& state, RenderSettings& render, Scene& scene, Camera& c
 			EndMainMenuBar();
 			return;
 		}
-		if (MenuItem("Settings##Render")) renderSettingsFlag = !renderSettingsFlag;
+		if (MenuItem("Settings##Render")) open.renderSettings = !open.renderSettings;
 		EndMenu();
 	}
 
-	if (MenuItem("Camera")) cameraFlag = !cameraFlag;
+	if (MenuItem("Camera")) open.camera = !open.camera;
 
 	if (BeginMenu("Objects")) {
-		if (MenuItem("New Sphere##Objects")) newSphereFlag = !newSphereFlag;
-		if (MenuItem("Edit Spheres##Objects")) editSpheresFlag = !editSpheresFlag;
-		if (MenuItem("New Model##Objects")) newModelFlag = !newModelFlag;
-		if (MenuItem("Edit Models##Objects")) editModelsFlag = !editModelsFlag;
+		if (MenuItem("New Sphere##Objects")) open.newSphere = !open.newSphere;
+		if (MenuItem("Edit Spheres##Objects")) open.editSpheres = !open.editSpheres;
+		if (MenuItem("New Model##Objects")) open.newModel = !open.newModel;
+		if (MenuItem("Edit Models##Objects")) open.editModels = !open.editModels;
 		EndMenu();
 	}
 
 	if (BeginMenu("Materials")) {
-		if (MenuItem("New Material##Materials")) newMaterialFlag = !newMaterialFlag;
-		if (MenuItem("Edit Materials##Materials")) editMaterialsFlag = !editMaterialsFlag;
+		if (MenuItem("New Material##Materials")) open.newMaterial = !open.newMaterial;
+		if (MenuItem("Edit Materials##Materials")) open.editMaterials = !open.editMaterials;
 		EndMenu();
 	}
 
-	if (MenuItem("Debug")) debugFlag = !debugFlag;
+	if (MenuItem("Debug")) open.debug = !open.debug;
 	EndMainMenuBar();
 }
 
@@ -112,8 +112,8 @@ void GUI::viewPort(const GLuint& texture, RenderSettings& render, ImVec2& viewSi
 
 
 void GUI::cameraWindow(Camera& cam, const RenderSettings& render, State& state, const ImGuiWindowFlags windowFlags) {
-	if (cameraFlag) {
-		if (Begin("Camera", &cameraFlag, windowFlags)) {
+	if (open.camera) {
+		if (Begin("Camera", &open.camera, windowFlags)) {
 
 			SeparatorText("Camera Position##Camera");
 			if (DragFloat("Pos X##Camera", &cam.pos.x, 0.05)) state.changed = true;
@@ -159,7 +159,7 @@ void GUI::cameraWindow(Camera& cam, const RenderSettings& render, State& state, 
 
 
 void GUI::debugWindow(const float dt, const State& state, const Scene& scene, const ImGuiWindowFlags windowFlags) const {
-	if (debugFlag) {
+	if (open.debug) {
 		SetNextWindowBgAlpha(0.35f);
 		Begin("Debug", nullptr, windowFlags | ImGuiWindowFlags_NoTitleBar);
 		Text(" %.0f fps", 1.0f / dt);

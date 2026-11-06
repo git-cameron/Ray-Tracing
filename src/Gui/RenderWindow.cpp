@@ -6,22 +6,9 @@ void GUI::renderWindow(const GLuint& texture, RenderSettings& render, State& sta
         saveImage(savePath, render.width, render.height);
         state.renderFlag = false;
 
-        // restore viewport settings
-        render.width = viewWidth;
-        render.height = viewHeight;
-        render.rayCount = viewRays;
-        render.maxBounces = viewBounces;
-
-        if (renderCamFlag) {
-            cam.pos = viewCamPos;
-            cam.rotation = viewCamRot;
-            cam.fov = viewCamFov;
-            cam.focusDistance = viewCamFocusDistance;
-            cam.aperture = viewCamAperture;
-            cam.updateModel();
-            cam.updateFocus(render.width);
-        }
-
+        render = backupRenderSettings;
+        if (renderCamFlag) cam = backupCam;
+        state.changed = true;
         return;
     }
 
@@ -43,36 +30,18 @@ void GUI::startRender(State& state, RenderSettings& render, Camera& cam) {
     savePath = getSavePath("render.png", "image", "png");
     if (savePath.empty()) return;
 
-    // backup viewport settings
-    viewWidth = render.width;
-    viewHeight = render.height;
-    viewRays = render.rayCount;
-    viewBounces = render.maxBounces;
+    backupRenderSettings = render;
 
     // apply render settings
     state.renderFlag = true;
     state.lockedMovement = true;
     state.changed = true;
-    render.width = renderWidth;
-    render.height = renderHeight;
-    render.rayCount = renderRays;
-    render.maxBounces = renderBounces;
+    render = renderSettings;
 
     if (renderCamFlag) {
-        // backup viewport cam settings
-        viewCamPos = cam.pos;
-        viewCamRot = cam.rotation;
-        viewCamFov = cam.fov;
-        viewCamFocusDistance = cam.focusDistance;
-        viewCamAperture = cam.aperture;
-
-        // apply render cam settings
-        cam.pos = renderCamPos;
-        cam.rotation = renderCamRot;
-        cam.fov = renderCamFov;
-        cam.focusDistance = renderCamFocusDistance;
-        cam.aperture = renderCamAperture;
+        backupCam = cam;
+        cam = renderCam;
         cam.updateModel();
-        cam.updateFocus(render.width);
+        cam.updateFocus(renderSettings.width);
     }
 }

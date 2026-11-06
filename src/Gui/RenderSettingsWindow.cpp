@@ -1,8 +1,8 @@
 #include "GUI.h"
 
 void GUI::renderSettingsWindow(RenderSettings& render, ToneSettings& tone, State& state, Camera& cam, const ImVec2& viewSize, const ImGuiWindowFlags windowFlags) {
-		if (renderSettingsFlag) {
-		if (Begin("Render Settings", &renderSettingsFlag, windowFlags)) {
+		if (open.renderSettings) {
+		if (Begin("Render Settings", &open.renderSettings, windowFlags)) {
 			SeparatorText("Window");
 
 			// window resolution
@@ -45,35 +45,35 @@ void GUI::renderSettingsWindow(RenderSettings& render, ToneSettings& tone, State
 			if (CollapsingHeader("Render")) {
 
 				// render resolution
-				if (InputInt("Width##Render", &renderWidth, 0) && renderWidth < 1) renderWidth = viewSize.x;
-				if (InputInt("Height##Render", &renderHeight, 0) && renderHeight < 1) renderHeight = viewSize.y;
-				gcd = GCD(renderWidth, renderHeight);
-				Text("Aspect ratio %i:%i", renderWidth / gcd, renderHeight / gcd);
+				if (InputInt("Width##Render", &renderSettings.width, 0) && renderSettings.width < 1) renderSettings.width = viewSize.x;
+				if (InputInt("Height##Render", &renderSettings.height, 0) && renderSettings.height < 1) renderSettings.height = viewSize.y;
+				gcd = GCD(renderSettings.width, renderSettings.height);
+				Text("Aspect ratio %i:%i", renderSettings.width / gcd, renderSettings.height / gcd);
 				Separator();
 
 				// parameters
 				if (InputInt("Frames##Render", &renderFrames, 0) && renderFrames < 1) renderFrames = 1;
-				if (InputInt("Ray Count##Render", &renderRays, 0) && renderRays < 1) renderRays = 1;
-				if (InputInt("Max Bounces##Render", &renderBounces, 0) && renderBounces < 0) renderBounces = 0;
+				if (InputInt("Ray Count##Render", &renderSettings.rayCount, 0) && renderSettings.rayCount < 1) renderSettings.rayCount = 1;
+				if (InputInt("Max Bounces##Render", &renderSettings.maxBounces, 0) && renderSettings.maxBounces < 0) renderSettings.maxBounces = 0;
 				Separator();
 			}
 
 			// camera settings
 			if (CollapsingHeader("Render Camera")) {
 				SeparatorText("Camera Position");
-				DragFloat("Pos X##Render", &renderCamPos.x, 0.05);
-				DragFloat("Pos Y##Render", &renderCamPos.y, 0.05);
-				DragFloat("Pos Z##Render", &renderCamPos.z, 0.05);
+				DragFloat("Pos X##Render", &renderCam.pos.x, 0.05);
+				DragFloat("Pos Y##Render", &renderCam.pos.y, 0.05);
+				DragFloat("Pos Z##Render", &renderCam.pos.z, 0.05);
 
 				SeparatorText("Camera Direction");
-				SliderFloat("Pitch##Render", &renderCamRot.y, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-				SliderFloat("Yaw##Render", &renderCamRot.x, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-				SliderFloat("Roll##Render", &renderCamRot.z, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+				SliderFloat("Pitch##Render", &renderCam.rotation.y, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+				SliderFloat("Yaw##Render", &renderCam.rotation.x, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+				SliderFloat("Roll##Render", &renderCam.rotation.z, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 
 				SeparatorText("Camera Other");
-				SliderFloat("Fov##Render", &renderCamFov, 1, 180, "%.0f", ImGuiSliderFlags_AlwaysClamp);
-				if (DragFloat("Focus##Render", &renderCamFocusDistance, 0.05, 0) && renderCamFocusDistance < 0.1f) renderCamFocusDistance = 0.1f;
-				SliderFloat("Aperture##Render", &renderCamAperture, 0, 2.0f, "%.3f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
+				SliderFloat("Fov##Render", &renderCam.fov, 1, 180, "%.0f", ImGuiSliderFlags_AlwaysClamp);
+				if (DragFloat("Focus##Render", &renderCam.focusDistance, 0.05, 0) && renderCam.focusDistance < 0.1f) renderCam.focusDistance = 0.1f;
+				SliderFloat("Aperture##Render", &renderCam.aperture, 0, 2.0f, "%.3f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
 			}
 
 			// tone map settings
@@ -89,11 +89,7 @@ void GUI::renderSettingsWindow(RenderSettings& render, ToneSettings& tone, State
 
 			Checkbox("Render Camera##Checkbox", &renderCamFlag);
 
-			if (Button("Set Camera")) {
-				renderCamPos = cam.pos;
-				renderCamRot = cam.rotation;
-				renderCamFov = cam.fov;
-			}
+			if (Button("Set Camera")) renderCam = cam;
 
 			if (Button("Start Render")) startRender(state, render, cam);
 		}

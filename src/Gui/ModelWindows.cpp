@@ -2,20 +2,20 @@
 
 void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags windowFlags) {
 	// model customisation
-	if (editModelsFlag) {
-		if (Begin("Models", &editModelsFlag, windowFlags)) {
+	if (open.editModels) {
+		if (Begin("Models", &open.editModels, windowFlags)) {
 			// tree buttons
 			bool openAllModels = false, closeAllModels = false;
 			if (Button("Expand All##2")) openAllModels = true;
 			SameLine();
 			if (Button("Close All##2")) closeAllModels = true;
 
-			if (!newModelFlag) {
+			if (!open.newModel) {
 				if (Button("New Model")) {
 					modelPath = "Select Model";
 					tempModel = Model{};
 					tempModelExtra = ModelExtra{};
-					newModelFlag = true;
+					open.newModel = true;
 				}
 				SameLine();
 			}
@@ -79,8 +79,8 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 	}
 
 	// add new model
-	if (newModelFlag) {
-		if (Begin("New Model", &newModelFlag, windowFlags | ImGuiWindowFlags_NoDocking)) {
+	if (open.newModel) {
+		if (Begin("New Model", &open.newModel, windowFlags | ImGuiWindowFlags_NoDocking)) {
 			editModel(&tempModel, &tempModelExtra, scene.materials);
 			Separator();
 
