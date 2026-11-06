@@ -6,6 +6,19 @@
 #include "Object.h"
 
 constexpr float defaultFov = 65.0f;
+constexpr float defaultSensitivity = 5.0f;
+
+constexpr int defaultViewWidth = 1280;
+constexpr int defaultViewHeight = 720;
+constexpr int defaultViewRays = 3;
+constexpr int defaultViewBounces = 5;
+
+constexpr int defaultRenderFrames = 1000;
+constexpr int defaultRenderRays = 1;
+constexpr int defaultRenderBounces = 25;
+constexpr int defaultRenderWidth = 1920;
+constexpr int defaultRenderHeight = 1080;
+
 constexpr float defaultWindowWidth = 1408;
 constexpr float defaultWindowHeight = 792;
 constexpr int tileSize = 128;
@@ -22,10 +35,10 @@ struct State {
 };
 
 struct RenderSettings {
-    int width = 1280;
-    int height = 720;
-    int rayCount = 3;
-    int maxBounces = 5;
+    int width = defaultViewWidth;
+    int height = defaultViewHeight;
+    int rayCount = defaultViewRays;
+    int maxBounces = defaultViewBounces;
     bool environmentLight = true;
 };
 

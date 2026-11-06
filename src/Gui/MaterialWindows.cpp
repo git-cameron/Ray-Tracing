@@ -2,8 +2,8 @@
 
 void GUI::materialWindows(Scene& scene, State& state, const ImGuiWindowFlags windowFlags) {
     // material customisation
-    if (editMaterialsFlag) {
-        if (Begin("Materials", &editMaterialsFlag, windowFlags)) {
+    if (open.editMaterials) {
+        if (Begin("Materials", &open.editMaterials, windowFlags)) {
 
             // tree buttons
             bool openAllMat = false, closeAllMat = false;
@@ -11,10 +11,10 @@ void GUI::materialWindows(Scene& scene, State& state, const ImGuiWindowFlags win
             SameLine();
             if (Button("Close All")) closeAllMat = true;
 
-            if (!newMaterialFlag) {
+            if (!open.newMaterial) {
                 if (Button("New Material")) {
                     tempMaterial = Material{};
-                    newMaterialFlag = true;
+                    open.newMaterial = true;
                 }
             }
 
@@ -34,8 +34,8 @@ void GUI::materialWindows(Scene& scene, State& state, const ImGuiWindowFlags win
     }
 
     // add new material
-    if (newMaterialFlag) {
-        if (Begin("New Material", &newMaterialFlag, windowFlags | ImGuiWindowFlags_NoDocking)) {
+    if (open.newMaterial) {
+        if (Begin("New Material", &open.newMaterial, windowFlags | ImGuiWindowFlags_NoDocking)) {
             editMaterial(&tempMaterial);
             Separator();
             if (Button("Add Material")) scene.materials.push_back(tempMaterial);

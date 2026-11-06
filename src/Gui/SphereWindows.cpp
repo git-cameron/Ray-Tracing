@@ -2,8 +2,8 @@
 
 void GUI::sphereWindows(Scene& scene, State& state, const ImGuiWindowFlags windowFlags) {
 	// sphere customisation
-	if (editSpheresFlag) {
-		if (Begin("Spheres", &editSpheresFlag, windowFlags)) {
+	if (open.editSpheres) {
+		if (Begin("Spheres", &open.editSpheres, windowFlags)) {
 
 			// tree buttons
 			bool openAllSphere = false, closeAllSphere = false;
@@ -15,10 +15,10 @@ void GUI::sphereWindows(Scene& scene, State& state, const ImGuiWindowFlags windo
 				closeAllSphere = true;
 			}
 
-			if (!newSphereFlag) {
+			if (!open.newSphere) {
 				if (Button("New Sphere")) {
 					tempSphere = Sphere{};
-					newSphereFlag = true;
+					open.newSphere = true;
 				}
 				SameLine();
 			}
@@ -72,8 +72,8 @@ void GUI::sphereWindows(Scene& scene, State& state, const ImGuiWindowFlags windo
 	}
 
 	// add new sphere
-	if (newSphereFlag) {
-		if (Begin("New Sphere", &newSphereFlag, windowFlags | ImGuiWindowFlags_NoDocking)) {
+	if (open.newSphere) {
+		if (Begin("New Sphere", &open.newSphere, windowFlags | ImGuiWindowFlags_NoDocking)) {
 			editSphere(&tempSphere, scene.materials);
 			Separator();
 			if (Button("Add Sphere")) {

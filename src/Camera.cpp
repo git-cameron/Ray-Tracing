@@ -1,7 +1,7 @@
 #include "Camera.h"
 
-Camera::Camera(const int width, const float fov) {
-	this->sensitivity = 5.0f;
+Camera::Camera(const int width, const float fov, const float sensitivity) {
+	this->sensitivity = sensitivity;
 	this->moveSpeed = 1.0f;
 	this->dt = 0;
 	this->fov = fov;
@@ -9,7 +9,7 @@ Camera::Camera(const int width, const float fov) {
 	this->aperture = 0.0f;
 
 	focus = width / (2 * glm::tan(glm::radians(fov) / 2));
-	pos = glm::vec3(0, 0, -1);
+	pos = glm::vec3(0);
 	rotation = glm::vec3(0);
 	direction = originalDirection;
 	up = originalUp;
@@ -20,7 +20,6 @@ Camera::Camera(const int width, const float fov) {
 void Camera::updateFocus(const int width) {
 	focus = width / (2 * glm::tan(glm::radians(fov) / 2));
 }
-
 
 void Camera::updateModel() {
 	const glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(rotation.x), originalUp);
@@ -104,7 +103,6 @@ void Camera::mouseInput(const float dx, const float dy, const bool mouse) {
 
 	updateModel();
 }
-
 
 void Camera::updateDT(const float dt) {
 	this->dt = dt;
