@@ -31,6 +31,7 @@ void GUI::sphereWindows(Scene& scene, State& state, const ImGuiWindowFlags windo
 					if (Button("Confirm")) {
 						scene.spheres.clear();
 						state.changed = true;
+						state.spheresChanged = true;
 						CloseCurrentPopup();
 					}
 					SameLine();
@@ -46,13 +47,17 @@ void GUI::sphereWindows(Scene& scene, State& state, const ImGuiWindowFlags windo
 				if (closeAllSphere) SetNextItemOpen(false);
 
 				if (TreeNodeEx(("Sphere " + std::to_string(i)).c_str())) {
-					state.changed = editSphere(scene.spheres[i], scene.materials) || state.changed;
+					if (editSphere(scene.spheres[i], scene.materials)) {
+						state.changed = true;
+						state.spheresChanged = true;
+					}
 
 					// delete spheres
 					SeparatorText("Delete Sphere");
 					if (Button(("Delete##1" + std::to_string(i)).c_str())) {
 						scene.spheres.erase(scene.spheres.begin() + i);
 						state.changed = true;
+						state.spheresChanged = true;
 					}
 					TreePop();
 				}
@@ -69,6 +74,7 @@ void GUI::sphereWindows(Scene& scene, State& state, const ImGuiWindowFlags windo
 			if (Button("Add Sphere")) {
 				scene.spheres.push_back(tempSphere);
 				state.changed = true;
+				state.spheresChanged = true;
 			}
 		}
 		End();

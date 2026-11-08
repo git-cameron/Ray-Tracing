@@ -61,7 +61,11 @@ void GUI::mainMenu(State& state, RenderSettings& render, Scene& scene, Camera& c
 		}
 		if (MenuItem("Open")) {
 			std::string scenePath = getLoadPath("scene", "ray");
-			if (!scenePath.empty() && loadScene(scenePath, scene.materials, scene.spheres)) state.changed = true;
+			if (!scenePath.empty() && loadScene(scenePath, scene.materials, scene.spheres)) {
+				state.changed = true;
+				state.spheresChanged = true;
+				state.materialsChanged = true;
+			}
 		}
 		EndMenu();
 	}

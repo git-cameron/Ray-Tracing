@@ -36,6 +36,8 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 						scene.nodes.clear();
 						scene.nodeTriIndex.clear();
 						state.changed = true;
+						state.modelsChanged = true;
+						state.BVHChanged = true;
 						CloseCurrentPopup();
 					}
 					SameLine();
@@ -51,7 +53,10 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 
 				if (TreeNodeEx(("Model " + std::to_string(i)).c_str())) {
 					// edit model
-					state.changed = editModel(scene.models[i], scene.modelExtras[i], scene.materials) || state.changed;
+					if (editModel(scene.models[i], scene.modelExtras[i], scene.materials)) {
+						state.changed = true;
+						state.modelsChanged = true;
+					}
 
 					// delete models
 					SeparatorText("Delete Model");
@@ -70,6 +75,8 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 							scene.models[j].BVHIndex -= nodeCount;
 						}
 						state.changed = true;
+						state.modelsChanged = true;
+						state.BVHChanged = true;
 					}
 					TreePop();
 				}
@@ -101,6 +108,8 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 					model.invTransform = tempModel.invTransform;
 					model.matIndex = tempModel.matIndex;
 					state.changed = true;
+					state.modelsChanged = true;
+					state.BVHChanged = true;
 				}
 			}
 		}

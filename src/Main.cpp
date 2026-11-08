@@ -69,7 +69,7 @@ int main() {
 
 	Textures textures(render.width, render.height);
 	UBO UBO;
-	SSBO triSSBO(1), nodeSSBO(2), triIndexSSBO(3);
+	SSBO sphereSSBO(1), materialSSBO(2), modelSSBO(3), triangleSSBO(4), nodeSSBO(5), triIndexSSBO(6);
 
 	// initialize loop variables
 	double currentTime, dt;
@@ -99,7 +99,6 @@ int main() {
 			state.changed = true;
 		}
 
-		bool updateScene = state.changed;
 		state.accumulationFrame = state.changed ? 1 : state.accumulationFrame + 1;
 		state.changed = false;
 
@@ -121,14 +120,27 @@ int main() {
 			.environmentLight = render.environmentLight
 		};
 		UBO.updateUniforms(uni);
-		if (updateScene) UBO.updateScene(scene.spheres, scene.materials, scene.models);
 
-		// SSBO data
-		if (scene.triangles.size() != oldTriSize) {
-			oldTriSize = scene.triangles.size();
-			triSSBO.update(scene.triangles);
+		// update SSBOs
+		if (state.spheresChanged) {
+			sphereSSBO.update(scene.spheres);
+			state.spheresChanged = false;
+		}
+		if (state.materialsChanged) {
+			std::vector<Material> linearMaterials;
+			for (const Material& mat : scene.materials) linearMaterials.push_back(mat.toLinear());
+			materialSSBO.update(linearMaterials);
+			state.materialsChanged = false;
+		}
+		if (state.modelsChanged) {
+			modelSSBO.update(scene.models);
+			state.modelsChanged = false;
+		}
+		if (state.BVHChanged) {
+			triangleSSBO.update(scene.triangles);
 			nodeSSBO.update(scene.nodes);
 			triIndexSSBO.update(scene.nodeTriIndex);
+			state.BVHChanged = false;
 		}
 
 		// raytrace pass
@@ -164,7 +176,10 @@ int main() {
 
 	textures.deleteTextures();
 	UBO.deleteUBO();
-	triSSBO.deleteSSBO();
+	sphereSSBO.deleteSSBO();
+	materialSSBO.deleteSSBO();
+	modelSSBO.deleteSSBO();
+	triangleSSBO.deleteSSBO();
 	nodeSSBO.deleteSSBO();
 	triIndexSSBO.deleteSSBO();
 	rayShader.deleteShader();

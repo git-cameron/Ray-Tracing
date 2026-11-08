@@ -2,7 +2,6 @@
 #define UBO_H
 
 #include <glad/glad.h>
-#include <vector>
 #include "Object.h"
 
 class UBO {
@@ -30,7 +29,7 @@ public:
 
 	UBO() {
 		glCreateBuffers(1, &ID);
-		glNamedBufferData(ID, TOTAL_SIZE, nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferData(ID, sizeof(Uniforms), nullptr, GL_DYNAMIC_DRAW);
 		glBindBufferBase(GL_UNIFORM_BUFFER, 0, ID);
 	}
 
@@ -38,30 +37,9 @@ public:
 		glNamedBufferSubData(ID, 0, sizeof(Uniforms), &uniforms);
 	}
 
-	void updateScene(const std::vector<Sphere>& spheres, const std::vector<Material>& materials, const std::vector<Model>& models) const {
-		const int sphereCount = std::min(spheres.size(), static_cast<size_t>(MAX_SPHERES));
-		const int materialCount = std::min(materials.size(), static_cast<size_t>(MAX_MATERIALS));
-		const int modelCount = std::min(models.size(), static_cast<size_t>(MAX_MODELS));
-
-		if (sphereCount > 0) glNamedBufferSubData(ID, SPHERE_OFFSET, sizeof(Sphere) * sphereCount, spheres.data());
-		if (materialCount > 0) {
-			// convert srgb colour to linear
-			std::vector<Material> linearMaterials;
-			for (Material mat : materials) linearMaterials.push_back(mat.toLinear());
-			glNamedBufferSubData(ID, MATERIAL_OFFSET, sizeof(Material) * materialCount, linearMaterials.data());
-		}
-		if (modelCount > 0) glNamedBufferSubData(ID, MODEL_OFFSET, sizeof(Model) * modelCount, models.data());
-	}
-
 	void deleteUBO() const {
 		glDeleteBuffers(1, &ID);
 	}
-
-private:
-	static constexpr int SPHERE_OFFSET = sizeof(Uniforms);
-	static constexpr int MATERIAL_OFFSET = SPHERE_OFFSET + sizeof(Sphere) * MAX_SPHERES;
-	static constexpr int MODEL_OFFSET = MATERIAL_OFFSET + sizeof(Material) * MAX_MATERIALS;
-	static constexpr int TOTAL_SIZE = MODEL_OFFSET + sizeof(Model) * MAX_MODELS;
 };
 
 

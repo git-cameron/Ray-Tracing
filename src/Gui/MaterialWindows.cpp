@@ -24,7 +24,10 @@ void GUI::materialWindows(Scene& scene, State& state, const ImGuiWindowFlags win
                 if (closeAllMat) SetNextItemOpen(false);
 
                 if (TreeNodeEx(("Material " + std::to_string(i)).c_str())) {
-                    state.changed = editMaterial(scene.materials[i]) || state.changed;
+                    if (editMaterial(scene.materials[i])) {
+                        state.changed = true;
+                        state.materialsChanged = true;
+                    }
                     TreePop();
                 }
             }
@@ -37,7 +40,10 @@ void GUI::materialWindows(Scene& scene, State& state, const ImGuiWindowFlags win
         if (Begin("New Material", &open.newMaterial, windowFlags | ImGuiWindowFlags_NoDocking)) {
             editMaterial(tempMaterial);
             Separator();
-            if (Button("Add Material")) scene.materials.push_back(tempMaterial);
+            if (Button("Add Material")) {
+                scene.materials.push_back(tempMaterial);
+                state.materialsChanged = true;
+            }
         }
         End();
     }

@@ -4,10 +4,6 @@
 #include<glm/glm.hpp>
 #include<glm/gtc/matrix_transform.hpp>
 
-#define MAX_SPHERES 100
-#define MAX_MATERIALS 100
-#define MAX_MODELS 100
-
 constexpr glm::vec3 originalSide = glm::vec3(1, 0, 0);
 constexpr glm::vec3 originalUp = glm::vec3(0, 1, 0);
 constexpr glm::vec3 originalDirection = glm::vec3(0, 0, 1);

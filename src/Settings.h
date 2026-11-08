@@ -30,8 +30,12 @@ constexpr const char* toneMapNames[5] = {
 struct State {
     int accumulationFrame = 0;
     bool renderFlag = false;
-    bool changed = false;
     bool lockedMovement = false;
+    bool changed = false;
+    bool spheresChanged = false;
+    bool materialsChanged = false;
+    bool modelsChanged = false;
+    bool BVHChanged = false;
 };
 
 struct RenderSettings {
