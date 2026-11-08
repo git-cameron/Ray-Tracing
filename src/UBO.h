@@ -29,13 +29,13 @@ public:
 	};
 
 	UBO() {
-		glGenBuffers(1, &ID);
+		glCreateBuffers(1, &ID);
+		glNamedBufferData(ID, TOTAL_SIZE, nullptr, GL_DYNAMIC_DRAW);
 		glBindBufferBase(GL_UNIFORM_BUFFER, 0, ID);
-		glBufferData(GL_UNIFORM_BUFFER, TOTAL_SIZE, nullptr, GL_STATIC_DRAW);
 	}
 
-	void updateUniforms(const Uniforms& uniforms) {
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Uniforms), &uniforms);
+	void updateUniforms(const Uniforms& uniforms) const {
+		glNamedBufferSubData(ID, 0, sizeof(Uniforms), &uniforms);
 	}
 
 	void updateScene(const std::vector<Sphere>& spheres, const std::vector<Material>& materials, const std::vector<Model>& models) const {
@@ -43,14 +43,14 @@ public:
 		const int materialCount = std::min(materials.size(), static_cast<size_t>(MAX_MATERIALS));
 		const int modelCount = std::min(models.size(), static_cast<size_t>(MAX_MODELS));
 
-		if (sphereCount > 0) glBufferSubData(GL_UNIFORM_BUFFER, SPHERE_OFFSET, sizeof(Sphere) * sphereCount, spheres.data());
+		if (sphereCount > 0) glNamedBufferSubData(ID, SPHERE_OFFSET, sizeof(Sphere) * sphereCount, spheres.data());
 		if (materialCount > 0) {
 			// convert srgb colour to linear
 			std::vector<Material> linearMaterials;
 			for (Material mat : materials) linearMaterials.push_back(mat.toLinear());
-			glBufferSubData(GL_UNIFORM_BUFFER, MATERIAL_OFFSET, sizeof(Material) * materialCount, linearMaterials.data());
+			glNamedBufferSubData(ID, MATERIAL_OFFSET, sizeof(Material) * materialCount, linearMaterials.data());
 		}
-		if (modelCount > 0) glBufferSubData(GL_UNIFORM_BUFFER, MODEL_OFFSET, sizeof(Model) * modelCount, models.data());
+		if (modelCount > 0) glNamedBufferSubData(ID, MODEL_OFFSET, sizeof(Model) * modelCount, models.data());
 	}
 
 	void deleteUBO() const {

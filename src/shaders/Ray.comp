@@ -10,8 +10,9 @@
 #define maxModels 100
 #define BVHStackSize 32
 
-out vec4 FragColor;
-uniform sampler2D text;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout(rgba32f, binding = 0) uniform image2D accumulation;
+uniform ivec2 tileOffset;
 
 struct Ray {
 	vec3 origin;
@@ -225,9 +226,7 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 		if (node.triCount > 0) {
 			// triangle intersections
 			for (int i = node.leftIndex; i < node.leftIndex + node.triCount; i++) {
-				float t;
-				float u;
-				float v;
+				float t, u, v;
 
 				if (triangleIntersect(ray, triangles[nodeTriIndex[i]], t, u, v) && t < result.dist) {
 					result.dist = t;
@@ -443,9 +442,12 @@ vec3 trace(Ray ray, inout uint seed) {
 	
 
 void main() {
-	uint seed = uint((gl_FragCoord.y * res.x) + gl_FragCoord.x) + accumulationFrame * 20983476; // large arbitrary  number 
-	float x = -res.x / 2.0 + gl_FragCoord.x;
-	float y = -res.y / 2.0 + gl_FragCoord.y;
+	ivec2 pixel = ivec2(gl_GlobalInvocationID.xy) + tileOffset;
+	if (pixel.x >= res.x || pixel.y >= res.y) return;
+
+	uint seed = uint((pixel.y * res.x) + pixel.x) + accumulationFrame * 20983476; // large arbitrary  number
+	float x = pixel.x - res.x / 2.0;
+	float y = pixel.y - res.y / 2.0;
 	vec3 totalLight = vec3(0);
 
 	for (int i = 0; i < rayCount; i++) {
@@ -454,16 +456,11 @@ void main() {
 		// anti aliasing and depth of field
 		vec3 lens = vec3(randomCircle(seed) * aperture, 0.0);
 		ray.origin = camPos + mat3(model) * lens;
-		ray.dir = normalize(mat3(model) * (vec3(x + random(seed) - 0.5, y + random(seed) - 0.5, focus) * (focusDistance / focus) - lens));
+		ray.dir = normalize(mat3(model) * (vec3(x + random(seed), y + random(seed), focus) * (focusDistance / focus) - lens));
 
 		totalLight += trace(ray, seed);
 	}
-	totalLight /= rayCount;
 
-	// pixel accumulation from previous frames
-	float weight = 1.0 / accumulationFrame;
-	totalLight = (1.0 - weight) * texelFetch(text, ivec2(gl_FragCoord.xy), 0).rgb + totalLight * weight;
-	
-	// final output color
-	FragColor = vec4(totalLight, 1.0);
+	// average light from rays and weighted previous frames
+	imageStore(accumulation, pixel, vec4(mix(imageLoad(accumulation, pixel).rgb, totalLight / rayCount, 1.0 / accumulationFrame), 1.0));
 }

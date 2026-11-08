@@ -3,7 +3,7 @@
 void GUI::renderWindow(const GLuint& texture, RenderSettings& render, State& state, Camera& cam, ImVec2& viewSize) const {
     // render finished
     if (state.accumulationFrame >= renderFrames || IsKeyPressed(ImGuiKey_Escape)) {
-        saveImage(savePath, render.width, render.height);
+        saveImage(savePath, texture, render.width, render.height);
         state.renderFlag = false;
 
         render = backupRenderSettings;

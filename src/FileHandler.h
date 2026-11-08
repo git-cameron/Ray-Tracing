@@ -8,9 +8,9 @@
 #include<fstream>
 #include "Object.h"
 
-static void saveImage(const std::string& filePath, const int width, const int height) {
+static void saveImage(const std::string& filePath, const GLuint& texture, const int width, const int height) {
 	void* data = malloc(width * height * 4);
-	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glGetTextureImage(texture, 0, GL_RGBA, GL_UNSIGNED_BYTE, width * height * 4, data);
 	stbi_flip_vertically_on_write(true);
 	stbi_write_png(filePath.c_str(), width, height, 4, data, width * 4);
 	free(data);

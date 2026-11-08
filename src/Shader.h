@@ -5,11 +5,27 @@
 
 class Shader {
 public:
-	GLuint program;
+	GLuint program{};
 
-	Shader(const char* vertexCode, const char* fragmentCode);
-	void use() const;
-	void deleteShader() const;
+	Shader(const char* shaderCode) {
+		const GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
+		glShaderSource(shader, 1, &shaderCode, nullptr);
+		glCompileShader(shader);
+
+		program = glCreateProgram();
+		glAttachShader(program, shader);
+		glLinkProgram(program);
+
+		glDeleteShader(shader);
+	}
+
+	void use() const {
+		glUseProgram(program);
+	}
+
+	void deleteShader() const {
+		glDeleteProgram(program);
+	}
 };
 
 #endif

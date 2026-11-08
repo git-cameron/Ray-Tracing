@@ -13,11 +13,9 @@
 #include "Settings.h"
 #include "Gui/GUI.h"
 #include "Shader.h"
-#include "VAO.h"
-#include "VBO.h"
 #include "Camera.h"
 #include "UBO.h"
-#include "FBO.h"
+#include "Textures.h"
 #include "SSBO.h"
 
 
@@ -37,18 +35,6 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLfloat vertices[] = {
-		// positions   // texCoords
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		-1.0f, -1.0f,  0.0f, 0.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-		 1.0f,  1.0f,  1.0f, 1.0f
-	};
-
-
 	GLFWwindow* window = glfwCreateWindow(defaultWindowWidth, defaultWindowHeight, "Raytrace", nullptr, nullptr);
 	if (window == nullptr) {
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -64,37 +50,30 @@ int main() {
 
 	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
+		glfwTerminate();
 		return -1;
 	}
 
-	glViewport(0, 0, render.width, render.height);
 
 	// ray shader
-	Shader rayShader(Default_vert, Ray_frag);
-	rayShader.use();
-	glUniform1i(glGetUniformLocation(rayShader.program, "text"), 0);
+	Shader rayShader(Ray_comp);
+	GLint tileOffsetLoc = glGetUniformLocation(rayShader.program, "tileOffset");
+	GLint workGroupSize[3];
+	glGetProgramiv(rayShader.program, GL_COMPUTE_WORK_GROUP_SIZE, workGroupSize);
 
 	// tone shader
-	Shader toneShader(Default_vert, Tone_frag);
-	toneShader.use();
-	glUniform1i(glGetUniformLocation(toneShader.program, "text"), 0);
+	Shader toneShader(Tone_comp);
 	GLint exposureLoc = glGetUniformLocation(toneShader.program, "exposure");
 	GLint tonemapLoc = glGetUniformLocation(toneShader.program, "tonemap");
 	GLint grayscaleLoc = glGetUniformLocation(toneShader.program, "grayscale");
 
-	VAO VAO;
-	VBO VBO(vertices, sizeof(vertices));
-	VAO.bind();
-	VAO.linkVBO(VBO, 0);
-	VAO.linkVBO(VBO, 1);
-
-	FBO FBO(render.width, render.height);
+	Textures textures(render.width, render.height);
 	UBO UBO;
-	SSBO triSSBO, nodeSSBO, triIndexSSBO;
+	SSBO triSSBO(1), nodeSSBO(2), triIndexSSBO(3);
 
 	// initialize loop variables
-	float currentTime, dt;
-	float prevTime = glfwGetTime();
+	double currentTime, dt;
+	double prevTime = glfwGetTime();
 	int oldWidth = render.width;
 	int oldHeight = render.height;
 	int oldTriSize = 0;
@@ -116,22 +95,16 @@ int main() {
 			oldWidth = render.width;
 			oldHeight = render.height;
 			cam.updateFocus(render.width);
-
-			// resize FBO and texture
-			FBO.resize(render.width, render.height);
-
-			// resize viewport
-			glViewport(0, 0, render.width, render.height);
+			textures.resize(render.width, render.height);
 			state.changed = true;
 		}
+
 		bool updateScene = state.changed;
-		if (state.changed) {
-			state.changed = false;
-			state.accumulationFrame = 1;
-		} else state.accumulationFrame++;
+		state.accumulationFrame = state.changed ? 1 : state.accumulationFrame + 1;
+		state.changed = false;
+
 
 		// scene data
-		rayShader.use();
 		UBO::Uniforms uni {
 			.model = cam.model,
 			.camPos = cam.pos,
@@ -153,41 +126,33 @@ int main() {
 		// SSBO data
 		if (scene.triangles.size() != oldTriSize) {
 			oldTriSize = scene.triangles.size();
-			triSSBO.updateTriangle(scene.triangles);
-			nodeSSBO.updateNodes(scene.nodes);
-			triIndexSSBO.updateTriIndex(scene.nodeTriIndex);
+			triSSBO.update(scene.triangles);
+			nodeSSBO.update(scene.nodes);
+			triIndexSSBO.update(scene.nodeTriIndex);
 		}
 
-		// ray trace pass
-		FBO.bindRay();
-		FBO.bindRayTexture();
-
-		// Tiling
-		int tilesX = (render.width + tileSize - 1) / tileSize;
-		int tilesY = (render.height + tileSize - 1) / tileSize;
-		glEnable(GL_SCISSOR_TEST);
-		for (int x = 0; x < tilesX; x++) {
-			int xPos = x * tileSize;
-			for (int y = 0; y < tilesY; y++) {
-				int yPos = y * tileSize;
-				glScissor(xPos, yPos, tileSize, tileSize);
-				glDrawArrays(GL_TRIANGLES, 0, 6);
+		// raytrace pass
+		rayShader.use();
+		int groups = tileSize / workGroupSize[0];
+		for (int x = 0; x < (render.width + tileSize - 1) / tileSize; x++) {
+			for (int y = 0; y < (render.height + tileSize - 1) / tileSize; y++) {
+				glUniform2i(tileOffsetLoc, x * tileSize, y * tileSize);
+				glDispatchCompute(groups, groups, 1);
 			}
 		}
-		glDisable(GL_SCISSOR_TEST);
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 		// tone map pass
-		FBO.bindDisplay();
 		toneShader.use();
 		glUniform1f(exposureLoc, tone.exposure);
 		glUniform1i(tonemapLoc, tone.tonemap);
 		glUniform1i(grayscaleLoc, tone.grayScale);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDispatchCompute((render.width + workGroupSize[0] - 1) / workGroupSize[0], (render.height + workGroupSize[0] - 1) / workGroupSize[0], 1);
+		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
 
 		// gui logic
-		gui.mainLoop(FBO.displayTexture, dt, state, render, tone, scene, cam);
+		gui.mainLoop(textures.displayTexture, dt, state, render, tone, scene, cam);
 
-		FBO.unBind();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -197,9 +162,7 @@ int main() {
 		glfwPollEvents();
 	}
 
-	VAO.deleteVAO();
-	VBO.deleteVBO();
-	FBO.deleteFBO();
+	textures.deleteTextures();
 	UBO.deleteUBO();
 	triSSBO.deleteSSBO();
 	nodeSSBO.deleteSSBO();
@@ -259,8 +222,5 @@ void input(GLFWwindow* window, State& state, Camera& cam) {
 		tabHeld = true;
 	} 
 	if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_RELEASE) tabHeld = false;
-
-	if (!state.lockedMovement && cam.input(window)) {
-		state.changed = true;
-	}
+	if (!state.lockedMovement && cam.input(window)) state.changed = true;
 }
