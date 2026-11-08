@@ -51,7 +51,7 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 
 				if (TreeNodeEx(("Model " + std::to_string(i)).c_str())) {
 					// edit model
-					state.changed = editModel(&scene.models[i], &scene.modelExtras[i], scene.materials) || state.changed;
+					state.changed = editModel(scene.models[i], scene.modelExtras[i], scene.materials) || state.changed;
 
 					// delete models
 					SeparatorText("Delete Model");
@@ -81,7 +81,7 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 	// add new model
 	if (open.newModel) {
 		if (Begin("New Model", &open.newModel, windowFlags | ImGuiWindowFlags_NoDocking)) {
-			editModel(&tempModel, &tempModelExtra, scene.materials);
+			editModel(tempModel, tempModelExtra, scene.materials);
 			Separator();
 
 			// gets model path
@@ -109,48 +109,48 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 }
 
 
-bool GUI::editModel(Model* model, ModelExtra* extra, const std::vector<Material>& materials) {
+bool GUI::editModel(Model& model, ModelExtra& extra, const std::vector<Material>& materials) {
     bool changed = false;
 
     SeparatorText("Model Position##EditModel");
-    if (DragFloat("Pos X##EditModel", &extra->pos.x, 0.05)) {
-        model->setTransform(extra);
+    if (DragFloat("Pos X##EditModel", &extra.pos.x, 0.05)) {
+        model.setTransform(extra);
         changed = true;
     }
-    if (DragFloat("Pos Y##EditModel", &extra->pos.y, 0.05)) {
-        model->setTransform(extra);
+    if (DragFloat("Pos Y##EditModel", &extra.pos.y, 0.05)) {
+        model.setTransform(extra);
         changed = true;
     }
-    if (DragFloat("Pos Z##EditModel", &extra->pos.z, 0.05)) {
-        model->setTransform(extra);
+    if (DragFloat("Pos Z##EditModel", &extra.pos.z, 0.05)) {
+        model.setTransform(extra);
         changed = true;
     }
 
     SeparatorText("Model Rotation##EditModel");
-    if (SliderFloat("Rotation X##EditModel", &extra->rotation.x, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
-        model->setTransform(extra);
+    if (SliderFloat("Rotation X##EditModel", &extra.rotation.x, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
+        model.setTransform(extra);
         changed = true;
     }
-    if (SliderFloat("Rotation Y##EditModel", &extra->rotation.y, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
-        model->setTransform(extra);
+    if (SliderFloat("Rotation Y##EditModel", &extra.rotation.y, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
+        model.setTransform(extra);
         changed = true;
     }
-    if (SliderFloat("Rotation Z##EditModel", &extra->rotation.z, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
-        model->setTransform(extra);
+    if (SliderFloat("Rotation Z##EditModel", &extra.rotation.z, -180, 180, "%.2f", ImGuiSliderFlags_AlwaysClamp)) {
+        model.setTransform(extra);
         changed = true;
     }
 
     SeparatorText("Other##EditModel");
-    float modelScale = extra->scale.x;
+    float modelScale = extra.scale.x;
 
     if (DragFloat("Scale##EditModel", &modelScale, 0.05, 0.1)) {
         if (modelScale < 0) modelScale = 0;
-        extra->scale = glm::vec3(modelScale);
-        model->setTransform(extra);
+        extra.scale = glm::vec3(modelScale);
+        model.setTransform(extra);
         changed = true;
     }
 
-    if (SliderInt("Material##EditModel", &model->matIndex, 0, materials.size() - 1, "%i", ImGuiSliderFlags_AlwaysClamp)) changed = true;
+    if (SliderInt("Material##EditModel", &model.matIndex, 0, materials.size() - 1, "%i", ImGuiSliderFlags_AlwaysClamp)) changed = true;
 
     return changed;
 }

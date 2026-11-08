@@ -73,9 +73,9 @@ private:
 	void modelWindows(Scene& scene, State& state, ImGuiWindowFlags windowFlags);
 	void debugWindow(float dt, const State& state, const Scene& scene, ImGuiWindowFlags windowFlags) const;
 
-	bool editMaterial(Material* mat);
-	bool editSphere(Sphere* sphere, const std::vector<Material>& materials);
-	bool editModel(Model* model, ModelExtra* extra, const std::vector<Material>& materials);
+	bool editMaterial(Material& mat);
+	bool editSphere(Sphere& sphere, const std::vector<Material>& materials);
+	bool editModel(Model& model, ModelExtra& extra, const std::vector<Material>& materials);
 
 	void startRender(State& state, RenderSettings& render, Camera& cam);
 };

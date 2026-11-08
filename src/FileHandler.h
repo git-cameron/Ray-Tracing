@@ -182,7 +182,8 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 		// loop over faces (triangles)
 		for (size_t face = 0; face < shape.mesh.num_face_vertices.size(); face++) {
 			tinyobj::index_t index{};
-			Triangle tri;
+			Triangle tri{};
+			bool missingNormal = false;
 
 			// vertex A
 			index = shape.mesh.indices[offset];
@@ -196,7 +197,7 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 				tri.normA.x = attrib.normals[3 * static_cast<size_t>(index.normal_index)];
 				tri.normA.y = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 1];
 				tri.normA.z = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 2];
-			}
+			} else missingNormal = true;
 
 
 			// vertex B
@@ -211,7 +212,7 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 				tri.normB.x = attrib.normals[3 * static_cast<size_t>(index.normal_index)];
 				tri.normB.y = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 1];
 				tri.normB.z = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 2];
-			}
+			} else missingNormal = true;
 
 
 			// vertex C
@@ -226,6 +227,15 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 				tri.normC.x = attrib.normals[3 * static_cast<size_t>(index.normal_index)];
 				tri.normC.y = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 1];
 				tri.normC.z = attrib.normals[3 * static_cast<size_t>(index.normal_index) + 2];
+			} else missingNormal = true;
+
+
+			// fallback if no normal
+			if (missingNormal) {
+				glm::vec3 normal = glm::normalize(glm::cross(tri.posB - tri.posA, tri.posC - tri.posA));
+				tri.normA = normal;
+				tri.normB = normal;
+				tri.normC = normal;
 			}
 
 			triangles.push_back(tri);
