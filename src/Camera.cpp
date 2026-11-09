@@ -22,11 +22,9 @@ void Camera::updateFocus(const int width) {
 }
 
 void Camera::updateModel() {
-	const glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(rotation.x), originalUp);
-	const glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-rotation.y), originalSide);
-	const glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(rotation.z), originalDirection);
-
-	model = rotateX * rotateY * rotateZ;
+	model = glm::rotate(glm::mat4(1.0), glm::radians(rotation.x), originalUp)
+		* glm::rotate(glm::mat4(1.0), glm::radians(-rotation.y), originalSide)
+		* glm::rotate(glm::mat4(1.0), glm::radians(rotation.z), originalDirection);
 	side = model[0];
 	up = model[1];
 	direction = model[2];

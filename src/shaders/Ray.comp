@@ -39,9 +39,9 @@ struct Sphere {
 struct Triangle {
 	vec3 posA; // 12
 	float pad1; // 4
-	vec3 posB; // 12
+	vec3 sideAB; // 12
 	float pad2; // 4
-	vec3 posC; // 12
+	vec3 sideAC; // 12
 	float pad3; // 4
 	vec3 normA; // 12
 	float pad4; // 4
@@ -52,7 +52,6 @@ struct Triangle {
 };
 
 struct Model {
-	mat4 transform; // 64
 	mat4 invTransform; // 64
 	int matIndex; // 4
 	int startIndex; // 4
@@ -73,7 +72,7 @@ struct hitData {
 	float dist;
 	vec3 pos;
 	vec3 normal;
-	Material mat;
+	int matIndex;
 };
 
 
@@ -128,14 +127,6 @@ float random(inout uint seed) {
 }
 
 
-// equal distribution across sphere
-// https://dspguide.com/ch2/6.html
-float randomNormalDist(inout uint seed) {
-	// Produces NaN when log(0)
-    return sqrt(-2.0 * log(max(random(seed), epsilonSmall))) * cos(2.0 * pi * random(seed));
-}
-
-
 vec2 randomCircle(inout uint seed) {
 	float angle = 2.0 * pi * random(seed);
 	return sqrt(random(seed)) * vec2(cos(angle), sin(angle));
@@ -166,10 +157,8 @@ bool sphereIntersect(Ray ray, Sphere sphere, out float dist, out bool inside) {
 
 // Möller–Trumbore
 bool triangleIntersect(Ray ray, Triangle tri, out float t, out float u, out float v) {
-	vec3 AB = tri.posB - tri.posA;
-	vec3 AC = tri.posC - tri.posA;
-	vec3 normal = cross(ray.dir, AC);
-	float det = dot(AB, normal);
+	vec3 normal = cross(ray.dir, tri.sideAC);
+	float det = dot(tri.sideAB, normal);
 
 	// ray parralel to triangle
 	if (abs(det) < epsilonSmall) return false;
@@ -180,12 +169,12 @@ bool triangleIntersect(Ray ray, Triangle tri, out float t, out float u, out floa
 	u = dot(AO, normal) * invDet;
 	if (u < 0.0 || u > 1.0) return false;
 
-	vec3 AOxAB = cross(AO, AB);
+	vec3 AOxAB = cross(AO, tri.sideAB);
 	v = dot(ray.dir, AOxAB) * invDet;
 	if (v < 0.0 || u + v > 1.0) return false;
 
 	// hit distance
-	t = dot(AC, AOxAB) * invDet;
+	t = dot(tri.sideAC, AOxAB) * invDet;
 	return t > epsilonDist;
 }
 
@@ -210,7 +199,6 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 	result.dist = maxDist;
 
 	int stack[BVHStackSize];
-	float stackDist[BVHStackSize];
 	int index = 1;
 	int bestTri = -1;
 	float bestU = 0.0;
@@ -218,13 +206,8 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 
 	// root node
 	stack[0] = model.BVHIndex;
-	stackDist[0] = 0.0;
 	while (index > 0) {
-		--index;
-
-		// closest hit moved (cull further nodes allready in stack)
-		if (stackDist[index] >= result.dist) continue;
-		BVHNode node = nodes[stack[index]];
+		BVHNode node = nodes[stack[--index]];
 
 		// leaf node
 		if (node.triCount > 0) {
@@ -251,23 +234,11 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 
 			// closer node pushed to stack last
 			if (leftDist > rightDist) {
-				if (leftDist < result.dist) {
-					stack[index] = node.leftIndex;
-					stackDist[index++] = leftDist;
-				}
-				if (rightDist < result.dist) {
-					stack[index] = node.leftIndex + 1;
-					stackDist[index++] = rightDist;
-				}
+				if (leftDist < result.dist) stack[index++] = node.leftIndex;
+				if (rightDist < result.dist) stack[index++] = node.leftIndex + 1;
 			} else {
-				if (rightDist < result.dist) {
-					stack[index] = node.leftIndex + 1;
-					stackDist[index++] = rightDist;
-				}
-				if (leftDist < result.dist) {
-					stack[index] = node.leftIndex;
-					stackDist[index++] = leftDist;
-				}
+				if (rightDist < result.dist) stack[index++] = node.leftIndex + 1;
+				if (leftDist < result.dist) stack[index++] = node.leftIndex;
 			}
 		}
 	}
@@ -279,7 +250,7 @@ hitData bvhIntersect(Ray ray, Model model, float maxDist) {
 
 		vec3 normal = (1.0 - bestU - bestV) * tri.normA + bestU * tri.normB + bestV * tri.normC;
 		// fallback if normal 0
-		if (dot(normal, normal) < epsilonSmall) normal = cross(tri.posB - tri.posA, tri.posC - tri.posA);
+		if (dot(normal, normal) < epsilonSmall) normal = cross(tri.sideAB, tri.sideAC);
 		result.normal = normalize(normal);
 
 		result.inside = dot(ray.dir, result.normal) > 0.0;
@@ -307,7 +278,7 @@ hitData getCollision(Ray ray) {
 			result.pos = ray.origin + ray.dir * t;
 			result.normal = normalize(result.pos - spheres[i].pos);
 			if (result.inside) result.normal = - result.normal;
-			result.mat = materials[spheres[i].matIndex];
+			result.matIndex = spheres[i].matIndex;
 		}
 	}
 
@@ -334,9 +305,9 @@ hitData getCollision(Ray ray) {
 
 			// transform result to world space
 			result.pos = originalOrigin + originalDir * result.dist;
-			result.normal = normalize((model.transform * vec4(hit.normal, 0.0)).xyz);
+			result.normal = normalize(hit.normal * mat3(model.invTransform));
 
-			result.mat = materials[model.matIndex];
+			result.matIndex = model.matIndex;
 		}
 	}
 
@@ -347,10 +318,20 @@ hitData getCollision(Ray ray) {
 }
 
 
-vec3 randBounce(vec3 normal, inout uint seed) {
-	vec3 bounce = normalize(vec3(randomNormalDist(seed), randomNormalDist(seed), randomNormalDist(seed)));
-	// same hemisphere
-	return dot(normal, bounce) < 0 ? -bounce : bounce;
+// Cosine-Density Sampling (Malley's Method)
+vec3 cosineBounce(vec3 normal, inout uint seed) {
+	vec2 disk = randomCircle(seed);
+	vec3 tangent = normalize(abs(normal.x) > 0.1 ? cross(vec3(0.0, 1.0, 0.0), normal) : cross(vec3(1.0, 0.0, 0.0), normal));
+	return tangent * disk.x + cross(normal, tangent) * disk.y + normal * sqrt(max(0.0, 1.0 - dot(disk, disk)));
+}
+
+
+vec3 uniformBounce(vec3 normal, inout uint seed) {
+	float z = 2.0 * random(seed) - 1.0;
+	float angle = 2.0 * pi * random(seed);
+	float radius = sqrt(max(0.0, 1.0 - z * z));
+	vec3 dir = vec3(radius * cos(angle), radius * sin(angle), z);
+	return dot(dir, normal) < 0.0 ? -dir : dir;
 }
 
 
@@ -396,7 +377,7 @@ vec3 trace(Ray ray, inout uint seed) {
 			break;
 		}
 
-		Material mat = hit.mat;
+		Material mat = materials[hit.matIndex];
 		ray.origin = hit.pos;
 
 		// Color from before surface hit
@@ -418,17 +399,14 @@ vec3 trace(Ray ray, inout uint seed) {
 			// diffusion and blur
 			vec3 side = reflected ? hit.normal : -hit.normal;
 			vec3 dir = reflected ? reflectRay(ray.dir, hit.normal) : refractDir;
-			ray.dir = normalize(dir + (1.0 - mat.smoothness) * randBounce(side, seed));
+			ray.dir = normalize(dir + (1.0 - mat.smoothness) * uniformBounce(side, seed));
 		}
 
 		// matt and reflective
 		else {
-			vec3 diffuseDir = randBounce(hit.normal, seed);
+			vec3 diffuseDir = cosineBounce(hit.normal, seed);
 			// chance of diffuse or specular reflection
-			if (random(seed) >= mat.gloss) {
-				ray.dir = diffuseDir;
-				color *= dot(hit.normal, diffuseDir) * 2.0;
-			}
+			if (random(seed) >= mat.gloss) ray.dir = diffuseDir;
 			// specular reflection / blur
 			else ray.dir = normalize(mat.smoothness * reflectRay(ray.dir, hit.normal) + (1.0 - mat.smoothness) * diffuseDir);
 

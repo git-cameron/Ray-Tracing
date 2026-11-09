@@ -33,7 +33,7 @@ struct State {
     bool lockedMovement = false;
     bool changed = false;
     bool spheresChanged = false;
-    bool materialsChanged = false;
+    bool materialsChanged = true;
     bool modelsChanged = false;
     bool BVHChanged = false;
 };

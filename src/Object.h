@@ -45,9 +45,9 @@ struct Sphere {
 struct Triangle {
 	glm::vec3 posA; // 12
 	float pad1; // 4
-	glm::vec3 posB; // 12
+	glm::vec3 sideAB; // 12
 	float pad2; // 4
-	glm::vec3 posC; // 12
+	glm::vec3 sideAC; // 12
 	float pad3; // 4
 	glm::vec3 normA; // 12
 	float pad4; // 4
@@ -58,16 +58,14 @@ struct Triangle {
 };
 
 
-// transform = translate * rotate (x * y * z) * scale
-
 struct ModelExtra {
 	glm::vec3 pos = glm::vec3(0);
 	glm::vec3 rotation = glm::vec3(0);
 	glm::vec3 scale = glm::vec3(1);
 };
 
+
 struct Model {
-	glm::mat4 transform = glm::mat4(1); // 64
 	glm::mat4 invTransform = glm::mat4(1); // 64
 	int matIndex = 0; // 4
 	int startIndex{}; // 4
@@ -75,29 +73,14 @@ struct Model {
 	int BVHIndex{}; // 4
 
 	void setTransform(const ModelExtra& data) {
-		const glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.x), originalUp);
-		const glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data.rotation.y), originalSide);
-		const glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data.rotation.z), originalDirection);
-
-		const glm::mat4 translate = glm::translate(glm::mat4(1), data.pos);
-		const glm::mat4 rotate = rotateX * rotateY * rotateZ;
-		const glm::mat4 scale = glm::scale(glm::mat4(1), data.scale);
-		transform = translate * rotate * scale;
-		invTransform = glm::inverse(transform);
-	}
-
-	void setTransform(const ModelExtra* data) {
-		const glm::mat3 rotateX = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.x), originalUp);
-		const glm::mat3 rotateY = glm::rotate(glm::mat4(1.0), glm::radians(-data->rotation.y), originalSide);
-		const glm::mat3 rotateZ = glm::rotate(glm::mat4(1.0), glm::radians(data->rotation.z), originalDirection);
-
-		const glm::mat4 translate = glm::translate(glm::mat4(1), data->pos);
-		const glm::mat4 rotate = rotateX * rotateY * rotateZ;
-		const glm::mat4 scale = glm::scale(glm::mat4(1), data->scale);
-		transform = translate * rotate * scale;
-		invTransform = glm::inverse(transform);
+		invTransform = glm::inverse(glm::translate(glm::mat4(1.0f), data.pos)
+			* glm::rotate(glm::mat4(1.0f), glm::radians(-data.rotation.x), originalUp)
+			* glm::rotate(glm::mat4(1.0f), glm::radians(-data.rotation.y), originalSide)
+			* glm::rotate(glm::mat4(1.0f), glm::radians(data.rotation.z), originalDirection)
+			* glm::scale(glm::mat4(1.0f), data.scale));
 	}
 };
+
 
 struct BVHNode {
 	glm::vec3 min; // 12

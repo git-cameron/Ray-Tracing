@@ -10,10 +10,12 @@ BVH::BVH(const Model& model, const std::vector<Triangle>& triangles) {
 	// calculate triangle centres, minx and max for subdivision
 	for (int i = model.startIndex; i <= model.endIndex; i++) {
 		Triangle tri = triangles[i];
-		BVHTriangles.emplace_back((tri.posA + tri.posB + tri.posC) / 3.0f);
+		glm::vec3 posB = tri.posA + tri.sideAB;
+		glm::vec3 posC = tri.posA + tri.sideAC;
+		BVHTriangles.emplace_back((tri.posA + posB + posC) / 3.0f);
 		BVHTriIndexes.push_back(i);
-		triMin.push_back(glm::min(glm::min(tri.posA, tri.posB), tri.posC));
-		triMax.push_back(glm::max(glm::max(tri.posA, tri.posB), tri.posC));
+		triMin.push_back(glm::min(glm::min(tri.posA, posB), posC));
+		triMax.push_back(glm::max(glm::max(tri.posA, posB), posC));
 	}
 
 	updateAABB(0);

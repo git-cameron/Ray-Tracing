@@ -203,9 +203,9 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 			// vertex B
 			index = shape.mesh.indices[offset + 1];
 
-			tri.posB.x = attrib.vertices[3 * static_cast<size_t>(index.vertex_index)];
-			tri.posB.y = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 1];
-			tri.posB.z = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 2];
+			tri.sideAB.x = attrib.vertices[3 * static_cast<size_t>(index.vertex_index)] - tri.posA.x;
+			tri.sideAB.y = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 1] - tri.posA.y;
+			tri.sideAB.z = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 2] - tri.posA.z;
 
 			// no normal if negative
 			if (index.normal_index >= 0) {
@@ -218,9 +218,9 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 			// vertex C
 			index = shape.mesh.indices[offset + 2];
 
-			tri.posC.x = attrib.vertices[3 * static_cast<size_t>(index.vertex_index)];
-			tri.posC.y = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 1];
-			tri.posC.z = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 2];
+			tri.sideAC.x = attrib.vertices[3 * static_cast<size_t>(index.vertex_index)] - tri.posA.x;
+			tri.sideAC.y = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 1] - tri.posA.y;
+			tri.sideAC.z = attrib.vertices[3 * static_cast<size_t>(index.vertex_index) + 2] - tri.posA.z;
 
 			// no normal if negative
 			if (index.normal_index >= 0) {
@@ -232,7 +232,7 @@ static bool loadModel(const std::string& filePath, std::vector<Model>& models, s
 
 			// fallback if no normal
 			if (missingNormal) {
-				glm::vec3 normal = glm::normalize(glm::cross(tri.posB - tri.posA, tri.posC - tri.posA));
+				glm::vec3 normal = glm::normalize(glm::cross(tri.sideAB, tri.sideAC));
 				tri.normA = normal;
 				tri.normB = normal;
 				tri.normC = normal;

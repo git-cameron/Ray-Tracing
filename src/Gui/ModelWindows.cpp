@@ -104,7 +104,6 @@ void GUI::modelWindows(Scene& scene, State& state, const ImGuiWindowFlags window
 					addBVH(model, scene.nodes, scene.nodeTriIndex, scene.triangles);
 
 					scene.modelExtras.back() = tempModelExtra;
-					model.transform = tempModel.transform;
 					model.invTransform = tempModel.invTransform;
 					model.matIndex = tempModel.matIndex;
 					state.changed = true;
