@@ -161,6 +161,7 @@ int main() {
 		glUniform1i(grayscaleLoc, tone.grayScale);
 		glDispatchCompute((render.width + workGroupSize[0] - 1) / workGroupSize[0], (render.height + workGroupSize[0] - 1) / workGroupSize[0], 1);
 		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
+		glFinish();
 
 		// gui logic
 		gui.mainLoop(textures.displayTexture, dt, state, render, tone, scene, cam);
